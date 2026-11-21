@@ -7,6 +7,7 @@ import MalaysianFuelTab from './components/MalaysianFuelTab.jsx'
 import ProfileFeedbackTab from './components/ProfileFeedbackTab.jsx'
 import ShareStoryModal from './components/ShareStoryModal.jsx'
 import WodTimerModal from './components/WodTimerModal.jsx'
+import AddToHomeScreenBanner from './components/AddToHomeScreenBanner.jsx'
 import { useAppState, getAllTimePRs, daysUntil } from './hooks/useAppState.js'
 
 export default function App() {
@@ -160,6 +161,8 @@ export default function App() {
         preset={timerPreset}
         onSaveResult={saveTimerResult}
       />
+
+      <AddToHomeScreenBanner />
 
       {/* non-intrusive toast */}
       {toast && (
