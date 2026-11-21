@@ -131,11 +131,16 @@ export function useAppState() {
     })
   }, [])
 
+  // log.date: custom ISO date from the log form (defaults to today), stored
+  // chronologically so PR comparison against earlier weeks works correctly
   const addOlyLog = useCallback((log) => {
-    setState((s) => ({
-      ...s,
-      olyLogs: [...s.olyLogs, { ...log, id: Date.now(), date: new Date().toLocaleDateString('en-MY', { day: 'numeric', month: 'short' }) }],
-    }))
+    setState((s) => {
+      const iso = log.date || new Date().toISOString().split('T')[0]
+      return {
+        ...s,
+        olyLogs: [...s.olyLogs, { ...log, id: Date.now(), date: iso }],
+      }
+    })
   }, [])
 
   const deleteOlyLog = useCallback(

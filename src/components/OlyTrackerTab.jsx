@@ -16,8 +16,15 @@ export default function OlyTrackerTab({ state, addOlyLog, deleteOlyLog }) {
   const [weight, setWeight] = useState('')
   const [feedback, setFeedback] = useState('')
   const [error, setError] = useState('')
+  // customizable session date — lets the athlete back-fill last week's
+  // session and still get correct chronological PR comparison
+  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [maxDate] = useState(() => new Date().toISOString().split('T')[0])
 
-  const prs = getAllTimePRs(state.olyLogs)
+  // PRs computed chronologically (sort by date) so back-dated entries
+  // don't wrongly claim PRs over earlier sessions
+  const sortedLogs = [...state.olyLogs].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
+  const prs = getAllTimePRs(sortedLogs)
 
   const save = () => {
     const w = parseFloat(weight)
@@ -26,18 +33,34 @@ export default function OlyTrackerTab({ state, addOlyLog, deleteOlyLog }) {
       return
     }
     setError('')
-    const prBefore = prs[variation] || 0
+    // chronological PR check: max weight recorded for this lift BEFORE the
+    // chosen date (same-date entries count too, so re-logging a PR day works)
+    const earlier = sortedLogs.filter(
+      (l) => l.variation === variation && (l.date || '') <= date
+    )
+    const prBefore = earlier.reduce((max, l) => Math.max(max, l.weight), 0)
     addOlyLog({
       variation,
       sets: sets.trim(),
       weight: w,
       feedback: feedback.trim(),
+      date,
       isPR: w > prBefore,
     })
     setWeight('')
     setFeedback('')
     setSets('')
+    setDate(new Date().toISOString().split('T')[0])
     setShowLog(false)
+  }
+
+  // display helper: "21 Nov" or "21 Nov 2025" when not the current year
+  const formatDate = (iso) => {
+    if (!iso) return ''
+    const d = new Date(iso + 'T00:00:00')
+    const opts = { day: 'numeric', month: 'short' }
+    if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric'
+    return d.toLocaleDateString(undefined, opts)
   }
 
   const history = state.olyLogs
@@ -104,7 +127,7 @@ export default function OlyTrackerTab({ state, addOlyLog, deleteOlyLog }) {
                 <span className="day-chip tnum">{String(i + 1).padStart(2, '0')}</span>
                 <span className="flex-1 min-w-0">
                   <span className="font-bold text-sm text-ink block truncate">{pr.lift}</span>
-                  <span className="text-xs text-mid tnum block">{pr.date}{pr.sets ? ` • ${pr.sets}` : ''}</span>
+                  <span className="text-xs text-mid tnum block">{formatDate(pr.date)}{pr.sets ? ` • ${pr.sets}` : ''}</span>
                 </span>
                 <span className="text-right shrink-0">
                   <span className="text-lg font-black tnum accent-text">{pr.weight}</span>
@@ -183,7 +206,7 @@ export default function OlyTrackerTab({ state, addOlyLog, deleteOlyLog }) {
                       </div>
                       <p className="text-xs text-mid mt-1 tnum">
                         <span className="text-ink font-bold">{log.weight} kg</span>
-                        {log.sets && <> • {log.sets}</>} • {log.date}
+                        {log.sets && <> • {log.sets}</>} • {formatDate(log.date)}
                       </p>
                     </div>
                     <div className="flex shrink-0">
@@ -232,6 +255,14 @@ export default function OlyTrackerTab({ state, addOlyLog, deleteOlyLog }) {
           </select>
           <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Sets × Reps</label>
           <input value={sets} onChange={(e) => setSets(e.target.value)} placeholder="e.g. 5 × 2 @ 85%" className="input mb-3" />
+          <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Session Date</label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            max={maxDate}
+            className="input tnum mb-3"
+          />
           <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Daily Top Weight / 1RM (kg)</label>
           <input type="number" step="0.5" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g. 80" className="input tnum mb-3" />
           <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Coach Feedback / Cues (optional)</label>
