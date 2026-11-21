@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
-import { Download, Upload, Trash2 } from 'lucide-react'
+import { Download, Upload, Trash2, Lightbulb } from 'lucide-react'
 import { SPORTS, LEVELS, DIVISIONS, FEEDBACK_CATEGORIES, GITHUB_REPO } from '../data/malaysianMeals.js'
-import { GOALS, DIETARY_PREFS, computeMetrics } from '../hooks/useAppState.js'
+import { GOALS, DIETARY_PREFS, computeMetrics, recommendPlan } from '../hooks/useAppState.js'
 import CloudSyncCard from './CloudSyncCard.jsx'
 
 export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSON, importDataJSON, resetAll, notify }) {
@@ -193,6 +193,27 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
                   ⚠ {m.goalLabel} would drop below the {m.floor.toLocaleString()} kcal {p.sex === 'female' ? 'female' : 'male'} safety floor — calories held at the floor.
                 </p>
               )}
+            </div>
+          )
+        })()}
+
+        {/* coach-style recommendation */}
+        {(() => {
+          const plan = recommendPlan(p)
+          const m = computeMetrics(p)
+          return (
+            <div className="rounded-xl p-3 space-y-2 border-2" style={{ borderColor: 'var(--uv)', background: 'color-mix(in srgb, var(--uv) 6%, var(--paper-card))' }}>
+              <p className="text-[10px] font-black uppercase tracking-widest accent-text flex items-center gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5" /> Coach's Plan for {m.goalLabel}
+              </p>
+              <ul className="space-y-1.5">
+                {plan.steps.map((s, i) => (
+                  <li key={i} className="text-xs text-soft leading-relaxed flex gap-1.5">
+                    <span className="accent-text font-black shrink-0">•</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )
         })()}

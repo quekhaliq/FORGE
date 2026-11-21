@@ -317,3 +317,69 @@ export function computeMetrics(profile) {
     goalLabel: goal.label,
   }
 }
+
+// ============================================================================
+// Coach-style recommendation engine — explains what the numbers mean
+// and suggests safe, evidence-based targets for the selected goal.
+// ============================================================================
+
+const HEALTHY_BF = { male: { min: 10, ideal: 15 }, female: { min: 18, ideal: 23 } }
+
+export function recommendPlan(profile) {
+  const weight = profile.bodyWeightKg || 70
+  const bf = Math.min(60, Math.max(3, profile.bodyFatPct ?? 20))
+  const sex = profile.sex || 'male'
+  const goal = profile.goal || 'recomp'
+  const lbm = weight * (1 - bf / 100)
+  const healthy = HEALTHY_BF[sex]
+  const steps = []
+
+  if (goal === 'lean') {
+    // Fat loss: aim for healthy ideal BF, preserve LBM
+    const targetBf = bf > healthy.ideal ? healthy.ideal : Math.max(healthy.min, bf - 3)
+    const targetWeight = lbm / (1 - targetBf / 100)
+    const fatToLose = Math.max(0, weight - targetWeight)
+    const weeklyKg = Math.min(0.7, Math.max(0.3, weight * 0.0075)) // 0.5–0.75% BW/week
+    const weeks = Math.ceil(fatToLose / weeklyKg)
+    if (fatToLose >= 0.5) {
+      steps.push(
+        `Your body fat is ${bf}% — above the healthy athletic range for ${sex === 'female' ? 'women' : 'men'} (~${healthy.min}–${healthy.ideal}%). A lean target of ${targetBf}% body fat is realistic and healthy.`,
+        `That means losing about ${fatToLose.toFixed(1)} kg of fat while keeping your ${lbm.toFixed(1)} kg of muscle — target weight ≈ ${targetWeight.toFixed(1)} kg.`,
+        `Safe rate: ${weeklyKg.toFixed(1)} kg per week (0.5–0.75% of body weight). At that pace you'll reach it in roughly ${weeks} weeks.`,
+        `Your calorie target already includes a moderate deficit (−400 kcal) — combined with ${computeMetrics(profile).proteinG}g protein daily to protect muscle.`
+      )
+    } else {
+      steps.push(
+        `You're already lean at ${bf}% body fat — within the healthy athletic range.`,
+        `A fat-loss phase isn't necessary; staying at maintenance calories with high protein will keep you sharp.`,
+        `If you want visible definition, a slow recomp (maintenance calories + progressive training) is the better tool.`
+      )
+    }
+  } else if (goal === 'muscle' || goal === 'bulk') {
+    const isBulk = goal === 'bulk'
+    const weeklyKg = isBulk ? 0.35 : 0.25 // ~0.25–0.35 kg/week lean gain
+    const months = isBulk ? 6 : 4
+    const gain = (weeklyKg * 4.3 * months).toFixed(1)
+    const targetWeight = (weight + weeklyKg * 4.3 * months).toFixed(1)
+    const targetBf = Math.min(healthy.ideal + (isBulk ? 4 : 2), bf + 2)
+    steps.push(
+      `Building muscle is slower than fat loss — expect roughly ${weeklyKg} kg per week of mostly-lean gain (${gain} kg over ~${months} months).`,
+      `Suggested checkpoint: reach ≈ ${targetWeight} kg body weight, letting body fat drift up modestly to ~${targetBf}% (normal when gaining).`,
+      `Your ${computeMetrics(profile).proteinG}g protein target and the ${isBulk ? '+400' : '+250'} kcal surplus in your calorie goal are set for exactly this.`,
+      `After the gain phase, a short lean/fat-loss block (−400 kcal, same protein) reveals the new muscle.`
+    )
+  } else {
+    // Recomp: similar weight, lower BF
+    const targetBf = Math.max(healthy.min, bf - 4)
+    const targetWeight = lbm / (1 - targetBf / 100)
+    const delta = (targetWeight - weight).toFixed(1)
+    steps.push(
+      `Recomposition means staying near your current weight while swapping fat for muscle — the scale barely moves, the mirror does.`,
+      `Aim for body fat from ${bf}% → ~${targetBf}% over 8–12 weeks. That's about ${Math.abs(delta)} kg ${delta >= 0 ? 'gain' : 'loss'} on the scale — don't chase the scale here.`,
+      `Maintenance calories (${computeMetrics(profile).calories.toLocaleString()} kcal) with ${computeMetrics(profile).proteinG}g protein is the right setup — protein is the driver of recomp.`,
+      `Progress markers: same weight, lifts going up, waist measurement going down. Track those instead of scale weight.`
+    )
+  }
+
+  return { steps, lbm, targetBf: steps.length ? undefined : undefined, bf, weight }
+}
