@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react'
-import { Dumbbell, Medal, Utensils, User, Share2, Timer, Sun, Moon } from 'lucide-react'
+import { Dumbbell, Medal, Utensils, User, Share2, Timer, Sun, Moon, Sparkles } from 'lucide-react'
 
 const TABS = [
   { id: 'train', label: 'Train', icon: Dumbbell },
@@ -56,10 +56,11 @@ export default function Navbar({ activeTab, setActiveTab, daysLeft, onShare, onL
               onClick={onToggleTheme}
               className="w-[44px] h-[44px] rounded-xl border-2 flex items-center justify-center transition"
               style={{ borderColor: 'var(--line-soft)', color: 'var(--ink)' }}
-              aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={"Switch theme (current: " + theme + ")"}
             >
-              <Sun className="w-5 h-5 sun-only" />
-              <Moon className="w-5 h-5 moon-only" />
+              <Sun className={"w-5 h-5 " + (theme === 'dark' ? '' : 'hidden')} />
+              <Moon className={"w-5 h-5 " + (theme === 'light' ? '' : 'hidden')} />
+              <Sparkles className={"w-5 h-5 " + (theme === 'aurora' ? '' : 'hidden')} />
             </button>
             <button
               onClick={onLaunchTimer}

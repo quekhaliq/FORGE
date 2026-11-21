@@ -26,6 +26,89 @@
   --uv-bright: #fde047;
 }
 
+/* ============================================================================
+   AURORA — alternative UI/UX concept: glassmorphic cool athletic style.
+   Frosted translucent cards over a soft blue→teal gradient, pill shapes,
+   rounded corners everywhere, softer display type. Applied via .aurora
+   on <html>, cycled from the theme toggle (light → dark → aurora).
+   ========================================================================== */
+.aurora {
+  --uv: #3b82f6;         /* blue-500 accent */
+  --uv-bright: #22d3ee;  /* cyan-400 highlight */
+  --ink: #0f172a;        /* slate-900 ink */
+  --paper: #eef4fb;      /* cool sky canvas */
+  --paper-card: rgba(255, 255, 255, 0.55); /* glass */
+  --line: rgba(148, 163, 184, 0.5);
+  --line-soft: rgba(203, 213, 225, 0.7);
+  --muted: #64748b;
+}
+
+.aurora body,
+.aurora {
+  background:
+    radial-gradient(800px 500px at 15% 0%, rgba(59, 130, 246, 0.16), transparent 60%),
+    radial-gradient(700px 500px at 90% 15%, rgba(34, 211, 238, 0.14), transparent 55%),
+    radial-gradient(600px 400px at 50% 100%, rgba(168, 85, 247, 0.10), transparent 60%),
+    linear-gradient(180deg, #eef4fb 0%, #e6eefb 100%);
+}
+
+.aurora .card,
+.aurora .panel {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.10);
+  border-radius: 24px;
+}
+
+.aurora .panel { border-radius: 28px; border: 1.5px solid rgba(255,255,255,0.7); }
+
+.aurora .btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #22d3ee);
+  color: #fff;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+}
+.aurora .btn-ghost {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  color: #0f172a;
+}
+.aurora .pill-active {
+  background: linear-gradient(135deg, #3b82f6, #22d3ee);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+.aurora .pill-idle {
+  background: rgba(255, 255, 255, 0.55);
+  color: #64748b;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  border-radius: 999px;
+}
+.aurora .input {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(203, 213, 225, 0.9);
+  border-radius: 999px;
+}
+.aurora .input:focus { border-color: #3b82f6; }
+.aurora .section-chip {
+  border-radius: 999px;
+  background: linear-gradient(135deg, #3b82f6, #22d3ee);
+}
+.aurora .day-chip { border-radius: 12px; }
+.aurora .display-font {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-transform: none; /* softer sentence-style headlines */
+}
+.aurora .hard-shadow-brand { box-shadow: 0 8px 24px rgba(34, 211, 238, 0.25); }
+
 body {
   touch-action: manipulation; /* kills double-tap zoom on mobile */
   font-family: 'Inter', system-ui, sans-serif;

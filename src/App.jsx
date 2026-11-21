@@ -18,14 +18,19 @@ export default function App() {
   const [timerOpen, setTimerOpen] = useState(false)
   const [timerPreset, setTimerPreset] = useState(null)
   const [toast, setToast] = useState(null)
-  const [theme, setTheme] = useState(() => localStorage.getItem('forge_theme') || 'light')
+  const [theme, setTheme] = useState(() => localStorage.getItem('forge_theme') || 'dark')
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
+    document.documentElement.classList.toggle('aurora', theme === 'aurora')
     localStorage.setItem('forge_theme', theme)
   }, [theme])
 
-  const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), [])
+  // cycles dark → light → aurora
+  const toggleTheme = useCallback(() => {
+    const order = ['dark', 'light', 'aurora']
+    setTheme((t) => order[(order.indexOf(t) + 1) % order.length])
+  }, [])
 
   const p = app.state.profile
   const daysLeft = daysUntil(p.targetRaceDate)
