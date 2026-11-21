@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from 'react'
 import { Dumbbell, Medal, Utensils, User, Share2, Timer, Sun, Moon } from 'lucide-react'
 
 const TABS = [
@@ -8,7 +9,22 @@ const TABS = [
   { id: 'profile', label: 'Profile', icon: User },
 ]
 
+// live local date + timezone, updates every minute
+function useLocalDateTime() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(t)
+  }, [])
+  const date = now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+  const time = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  const tz =
+    Intl.DateTimeFormat().resolvedOptions().timeZone?.split('/').pop().replace(/_/g, ' ') || 'Local'
+  return { date, time, tz }
+}
+
 export default function Navbar({ activeTab, setActiveTab, daysLeft, onShare, onLaunchTimer, theme, onToggleTheme }) {
+  const { date, time, tz } = useLocalDateTime()
   return (
     <>
       <header
@@ -24,6 +40,11 @@ export default function Navbar({ activeTab, setActiveTab, daysLeft, onShare, onL
             <svg viewBox="0 0 24 10" className="w-7 h-3 shrink-0" aria-hidden><g fill="var(--uv)"><rect x="0" y="0" width="4" height="10"/><rect x="6" y="0" width="4" height="10"/><rect x="12" y="0" width="4" height="10"/></g></svg>
             <span className="display-font text-base tracking-tight">HYBRID PREP HUB</span>
             <span className="bg-yellow-400 text-zinc-950 font-black text-[10px] px-1.5 py-0.5 rounded uppercase shrink-0">MY</span>
+            {/* live local date + timezone */}
+            <span className="hidden md:flex flex-col leading-none ml-2 pl-2 border-l border-soft">
+              <span className="text-[10px] font-bold text-ink tnum">{date} • {time}</span>
+              <span className="text-[9px] font-semibold text-faint uppercase tracking-wider">{tz}</span>
+            </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {daysLeft !== null && (

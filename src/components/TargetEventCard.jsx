@@ -21,7 +21,7 @@ export default function TargetEventCard({ raceName, raceDate, daysLeft }) {
             </span>
             <h2 className="display-font text-3xl text-white mt-3 truncate">{raceName || 'Target Event'}</h2>
             <p className="text-xs font-bold text-zinc-300 mt-1.5 flex items-center gap-3 tnum">
-              <span className="flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5 text-yellow-400" /> {raceDate ? new Date(raceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date TBC'}</span>
+              <span className="flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5 text-yellow-400" /> {raceDate ? new Date(raceDate + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : 'Date TBC'}</span>
               <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-yellow-400" /> Malaysia</span>
             </p>
           </div>

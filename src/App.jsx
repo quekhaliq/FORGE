@@ -8,6 +8,7 @@ import ProfileFeedbackTab from './components/ProfileFeedbackTab.jsx'
 import ShareStoryModal from './components/ShareStoryModal.jsx'
 import WodTimerModal from './components/WodTimerModal.jsx'
 import AddToHomeScreenBanner from './components/AddToHomeScreenBanner.jsx'
+import ScrollTopButton from './components/ScrollTopButton.jsx'
 import { useAppState, getAllTimePRs, daysUntil } from './hooks/useAppState.js'
 
 export default function App() {
@@ -168,6 +169,7 @@ export default function App() {
       />
 
       <AddToHomeScreenBanner />
+      <ScrollTopButton />
 
       {/* non-intrusive toast */}
       {toast && (

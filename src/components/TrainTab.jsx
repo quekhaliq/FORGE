@@ -31,7 +31,7 @@ function timerPresetFor(wod) {
 
 const TODAY_INDEX = (new Date().getDay() + 6) % 7 // Mon=0
 
-export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWodEntry, addCustomWorkout, onLaunchTimer, prs }) {
+export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWodEntry, addCustomWorkout, onLaunchTimer, prs, onShareProgress, daysLeft, proteinConsumed, proteinTarget, snatchPR }) {
   const p = state.profile
   const isOlyMode = p.sportMode === 'Olympic Weightlifting'
   const [week, setWeek] = useState(Math.min(p.currentWeek || 1, 4))
@@ -61,6 +61,23 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
       />
 
       <TargetEventCard raceName={p.targetRaceName || 'Target Event'} raceDate={p.targetRaceDate} daysLeft={daysLeft} />
+
+      {/* quick-jump navigation chips */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
+        {[
+          { id: 'sec-today', label: "Today's Session" },
+          { id: 'sec-plan', label: 'Weekly Plan' },
+          { id: 'sec-days', label: 'Day Details' },
+        ].map((s) => (
+          <button
+            key={s.id}
+            onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="btn-ghost !min-h-[40px] text-[11px] whitespace-nowrap shrink-0"
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
 
       {/* stat cards */}
       <div className="grid grid-cols-3 gap-2.5">
@@ -99,7 +116,7 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
       </div>
 
             {/* 01 — TODAY'S SESSION panel (featured card with illustration) */}
-      <section className="panel">
+      <section id="sec-today" className="panel scroll-mt-28">
         <div className="flex items-center justify-between px-4 py-3 hard-border-b">
           <div className="flex items-center gap-2.5">
             <span className="section-chip">01</span>
@@ -126,7 +143,7 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
       </section>
 
       {/* 02 — WEEKLY PLAN panel (dotted rows) */}
-      <section className="panel">
+      <section id="sec-plan" className="panel scroll-mt-28">
         <div className="flex items-center justify-between px-4 py-3 hard-border-b">
           <div className="flex items-center gap-2.5">
             <span className="section-chip">02</span>

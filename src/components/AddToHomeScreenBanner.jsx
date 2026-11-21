@@ -5,10 +5,14 @@ const DISMISS_KEY = 'forge_a2hs_dismissed'
 
 // true when running as an installed PWA (no install prompt needed)
 function isStandalone() {
-  return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    window.navigator.standalone === true
-  )
+  try {
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+    )
+  } catch {
+    return false
+  }
 }
 
 export default function AddToHomeScreenBanner() {
