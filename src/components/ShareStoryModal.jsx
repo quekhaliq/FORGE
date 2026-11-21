@@ -88,7 +88,7 @@ export default function ShareStoryModal({
           </div>
 
           <div className="flex justify-between items-end">
-            <span className="text-[10px] text-mid font-bold">#HyroxMalaysia #HybridAthlete</span>
+            <span className="text-[10px] text-mid font-bold">FORGE.</span>
             <span className="bg-orange-500 text-white font-black text-[10px] px-2 py-1 rounded">{dateStamp}</span>
           </div>
         </div>
