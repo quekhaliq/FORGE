@@ -22,15 +22,11 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
-    document.documentElement.classList.toggle('aurora', theme === 'aurora')
     localStorage.setItem('forge_theme', theme)
   }, [theme])
 
   // cycles dark → light → aurora
-  const toggleTheme = useCallback(() => {
-    const order = ['dark', 'light', 'aurora']
-    setTheme((t) => order[(order.indexOf(t) + 1) % order.length])
-  }, [])
+  const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), [])
 
   const p = app.state.profile
   const daysLeft = daysUntil(p.targetRaceDate)
