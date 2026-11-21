@@ -10,25 +10,20 @@
    Semantic classes auto-adapt via .dark on <html>.
    ========================================================================== */
 :root {
-  --uv: #ea580c;         /* orange-600 primary accent (light mode) — FORGE brand */
-  --uv-bright: #f97316;  /* orange-500 */
-  --ink: #18181b;        /* headline ink on light */
-  --paper: #faf8f3;      /* cream paper */
-  --paper-card: #ffffff;
-  --line: #18181b;       /* hard borders on light */
-  --line-soft: #d6d3ce;
-  --muted: #52525b;
+  --uv: #facc15;         /* neon yellow — reference accent */
+  --uv-bright: #fde047;  /* lighter yellow */
+  --ink: #fafafa;
+  --paper: #0a0a0a;      /* dark-first like reference */
+  --paper-card: #131316;
+  --line: #2a2a2e;
+  --line-soft: #232326;
+  --muted: #a1a1aa;
 }
 
+/* dark theme keeps the same tokens — the app is dark-first now */
 .dark {
-  --uv: #f97316;
-  --uv-bright: #fb923c;
-  --ink: #fafafa;
-  --paper: #0a0a0a;
-  --paper-card: #18181b;
-  --line: #3f3f46;
-  --line-soft: #27272a;
-  --muted: #a1a1aa;
+  --uv: #facc15;
+  --uv-bright: #fde047;
 }
 
 body {
@@ -52,7 +47,7 @@ body {
   .btn-primary {
     @apply font-bold rounded-xl min-h-[44px] px-4 transition;
     background: var(--uv);
-    color: #fff;
+    color: #0a0a0a;
   }
   .btn-primary:hover { filter: brightness(1.1); }
   .btn-ghost {

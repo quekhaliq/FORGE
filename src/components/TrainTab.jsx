@@ -3,6 +3,9 @@ import { X, Plus, ChevronDown, Zap, Timer, CheckSquare, Square } from 'lucide-re
 import { crossFitWeeks } from '../data/crossFitTracks.js'
 import OlyBlockProgram from './OlyBlockProgram.jsx'
 import EquipmentArt from './EquipmentArt.jsx'
+import PageHeader from './PageHeader.jsx'
+import TargetEventCard from './TargetEventCard.jsx'
+import { Flame, Beef, Trophy } from 'lucide-react'
 
 const WEEK_PHASES = ['Foundation', 'Density & Speed', 'Peak Intensity', 'Deload & Test']
 
@@ -50,26 +53,52 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
 
   return (
     <div className="space-y-5">
-      {/* editorial header — big display title + accent bar */}
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] accent-text flex items-center">
-            <span className="accent-bar" /> Athlete: {p.name} • {p.skillLevel} / {p.division}
-          </p>
-          <h1 className="display-font text-4xl sm:text-5xl mt-2 leading-[0.95]">
-            Training<br />Board<span className="accent-text">.</span>
-          </h1>
-          <p className="text-sm muted-text mt-2">Pick a day, hit the WOD, log the score.</p>
+      <PageHeader
+        index={1}
+        title={`Training Dashboard`}
+        subtitle={`Your weekly command centre for race-day readiness.`}
+        onShare={onShareProgress}
+      />
+
+      <TargetEventCard raceName={p.targetRaceName || 'Target Event'} raceDate={p.targetRaceDate} daysLeft={daysLeft} />
+
+      {/* stat cards */}
+      <div className="grid grid-cols-3 gap-2.5">
+        <div className="card !p-3 space-y-1">
+          <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--uv) 18%, transparent)' }}>
+            <Flame className="w-4 h-4 accent-text" />
+          </span>
+          <p className="text-[11px] font-bold text-mid">Weekly sessions</p>
+          <p className="display-font text-xl tnum"><span className="accent-text">{doneCount}</span><span className="text-mid text-sm">/{weekProgram.length}</span></p>
+          <p className="text-[10px] text-faint">Sessions this week</p>
         </div>
-        <div className="text-right shrink-0">
-          <p className="text-[10px] font-black uppercase tracking-widest muted-text">This Week</p>
-          <p className="display-font text-2xl tnum">
-            {doneCount}<span className="text-sm muted-text">/{weekProgram.length}</span>
-          </p>
+        <div className="card !p-3 space-y-1">
+          <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--uv) 18%, transparent)' }}>
+            <Beef className="w-4 h-4 accent-text" />
+          </span>
+          <p className="text-[11px] font-bold text-mid">Daily protein</p>
+          <p className="display-font text-xl tnum"><span className="accent-text">{proteinConsumed}</span><span className="text-mid text-sm">/{proteinTarget}g</span></p>
+          <p className="text-[10px] text-faint">Daily protein target</p>
+        </div>
+        <div className="card !p-3 space-y-1">
+          <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'color-mix(in srgb, var(--uv) 18%, transparent)' }}>
+            <Trophy className="w-4 h-4 accent-text" />
+          </span>
+          <p className="text-[11px] font-bold text-mid">Snatch PR</p>
+          <p className="display-font text-xl tnum">{snatchPR ? <span className="accent-text">{snatchPR}</span> : '—'}<span className="text-mid text-sm"> kg</span></p>
+          <p className="text-[10px] text-faint">All-time personal best</p>
         </div>
       </div>
 
-      {/* 01 — TODAY'S SESSION panel (featured card with illustration) */}
+      <div className="pt-2 space-y-1">
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-yellow-400 flex items-center gap-2">
+          <span className="inline-block w-8 h-[3px] bg-yellow-400" /> Training Plan
+        </p>
+        <h2 className="display-font text-3xl text-ink">Weekly Engine</h2>
+        <p className="text-sm text-mid">Your session blueprint. Check off each session as you go.</p>
+      </div>
+
+            {/* 01 — TODAY'S SESSION panel (featured card with illustration) */}
       <section className="panel">
         <div className="flex items-center justify-between px-4 py-3 hard-border-b">
           <div className="flex items-center gap-2.5">

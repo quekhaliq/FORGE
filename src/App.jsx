@@ -99,6 +99,11 @@ export default function App() {
             addCustomWorkout={app.addCustomWorkout}
             onLaunchTimer={launchTimer}
             prs={prs}
+            onShareProgress={() => setShareOpen(true)}
+            daysLeft={daysLeft ?? 0}
+            proteinConsumed={proteinConsumed}
+            proteinTarget={targetProtein}
+            snatchPR={prs['Full Snatch'] || null}
           />
         )}
         {activeTab === 'oly' && (

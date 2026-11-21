@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, ChevronDown, RotateCcw, ShoppingBasket, Flame } from 'lucide-react'
 import { malaysianMeals, mealPrepChecklist } from '../data/malaysianMeals.js'
 import { computeMetrics } from '../hooks/useAppState.js'
+import PageHeader from './PageHeader.jsx'
 import Modal from './Modal.jsx'
 
 const FILTERS = ['All', 'Halal', 'Vegetarian', 'Mamak']
@@ -24,6 +25,11 @@ export default function MalaysianFuelTab({ state, profile, logProtein, removePro
 
   return (
     <div className="space-y-5">
+      <PageHeader
+        index={3}
+        title={"My Fuel"}
+        subtitle={"Malaysian meals to power your next session."}
+      />
       {/* protein progress card with computed metrics */}
       <div className="card space-y-3">
         <div className="flex items-center justify-between">

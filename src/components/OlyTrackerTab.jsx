@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, Trash2, ChevronDown, Trophy, CalendarDays } from 'lucide-react'
 import { LIFT_GROUPS, LIFT_VARIATIONS } from '../data/malaysianMeals.js'
 import { getAllTimePRs } from '../hooks/useAppState.js'
+import PageHeader from './PageHeader.jsx'
 import Modal from './Modal.jsx'
 
 export default function OlyTrackerTab({ state, addOlyLog, deleteOlyLog }) {
@@ -55,9 +56,13 @@ export default function OlyTrackerTab({ state, addOlyLog, deleteOlyLog }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="font-black text-lg">Lift Tracker</h2>
-        <button onClick={() => setShowLog(true)} className="btn-primary text-sm flex items-center gap-1.5">
+      <PageHeader
+        index={2}
+        title={"Olympic Lifts"}
+        subtitle={"Track your barbell sessions, technical cues and personal bests."}
+      />
+      <div className="flex sm:justify-end">
+        <button onClick={() => setShowLog(true)} className="btn-primary text-sm flex items-center gap-1.5 w-full sm:w-auto justify-center">
           <Plus className="w-4 h-4" /> Log Lift
         </button>
       </div>

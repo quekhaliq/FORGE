@@ -3,6 +3,7 @@ import { Download, Upload, Trash2 } from 'lucide-react'
 import { SPORTS, LEVELS, DIVISIONS, FEEDBACK_CATEGORIES, GITHUB_REPO } from '../data/malaysianMeals.js'
 import { GOALS, DIETARY_PREFS, computeMetrics, prescribe } from '../hooks/useAppState.js'
 import CloudSyncCard from './CloudSyncCard.jsx'
+import PageHeader from './PageHeader.jsx'
 
 export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSON, importDataJSON, resetAll, notify }) {
   const [fbCategory, setFbCategory] = useState(FEEDBACK_CATEGORIES[0])
@@ -61,7 +62,11 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
 
   return (
     <div className="space-y-5">
-      <h2 className="font-black text-lg">Profile</h2>
+      <PageHeader
+        index={4}
+        title={"Athlete Profile"}
+        subtitle={"Set your race target and make this hub yours."}
+      />
 
       {/* Training Profile card */}
       <form onSubmit={saveTraining} className="card space-y-3">
