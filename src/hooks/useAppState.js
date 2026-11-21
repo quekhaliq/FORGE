@@ -63,6 +63,13 @@ function loadState() {
     if (merged.nutrition?.loggedItems?.length && !merged.nutritionByDate[merged.nutrition.dateKey]) {
       merged.nutritionByDate[merged.nutrition.dateKey] = merged.nutrition.loggedItems
     }
+    // seed events from legacy single-race profile if missing
+    if (!merged.profile.events || merged.profile.events.length === 0) {
+      merged.profile.events = [
+        { id: 'ev-legacy', name: merged.profile.targetRaceName || 'My Race', date: merged.profile.targetRaceDate, location: 'Malaysia', venue: '', notes: 'More info coming soon' },
+      ]
+      merged.profile.activeEventId = 'ev-legacy'
+    }
     return merged
   } catch {
     return defaultState()
@@ -214,6 +221,46 @@ export function useAppState() {
     setState((s) => ({ ...s, customMeals: s.customMeals.filter((m) => m.id !== id) }))
   }, [])
 
+  const addEvent = useCallback((ev) => {
+    setState((s) => ({
+      ...s,
+      profile: { ...s.profile, events: [...(s.profile.events || []), { ...ev, id: 'ev-' + Date.now() }] },
+    }))
+  }, [])
+
+  const updateEvent = useCallback((id, patch) => {
+    setState((s) => ({
+      ...s,
+      profile: {
+        ...s.profile,
+        events: (s.profile.events || []).map((e) => (e.id === id ? { ...e, ...patch } : e)),
+        // keep legacy race fields in sync with the active event
+        ...(patch.date || patch.name
+          ? s.profile.activeEventId === id
+            ? { targetRaceName: patch.name || s.profile.targetRaceName, targetRaceDate: patch.date || s.profile.targetRaceDate }
+            : {}
+          : {}),
+      },
+    }))
+  }, [])
+
+  const deleteEvent = useCallback((id) => {
+    setState((s) => {
+      const events = (s.profile.events || []).filter((e) => e.id !== id)
+      return {
+        ...s,
+        profile: { ...s.profile, events, activeEventId: s.profile.activeEventId === id ? events[0]?.id || null : s.profile.activeEventId },
+      }
+    })
+  }, [])
+
+  const setActiveEvent = useCallback((id) => {
+    setState((s) => {
+      const ev = (s.profile.events || []).find((e) => e.id === id)
+      return { ...s, profile: { ...s.profile, activeEventId: id, targetRaceName: ev?.name, targetRaceDate: ev?.date } }
+    })
+  }, [])
+
   const togglePrepItem = useCallback((id) => {
     setState((s) => {
       const done = { ...s.nutrition.prepChecklist }
@@ -266,6 +313,10 @@ export function useAppState() {
     completeOnboarding,
     skipOnboarding,
     updateProfile,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+    setActiveEvent,
     toggleWorkout,
     updateWorkout,
     addCustomWorkout,

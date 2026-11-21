@@ -32,7 +32,7 @@ function timerPresetFor(wod) {
 
 const TODAY_INDEX = (new Date().getDay() + 6) % 7 // Mon=0
 
-export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWodEntry, addCustomWorkout, onLaunchTimer, prs, onShareProgress, daysLeft, proteinConsumed, proteinTarget, snatchPR }) {
+export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWodEntry, addCustomWorkout, onLaunchTimer, prs, onShareProgress, proteinConsumed, proteinTarget, snatchPR, onNotify, onAddEvent, onUpdateEvent, onDeleteEvent, onSetActiveEvent }) {
   const p = state.profile
   const isOlyMode = p.sportMode === 'Olympic Weightlifting'
   const [viewMode, setViewMode] = useState('strength')
@@ -89,7 +89,7 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
         </button>
       </div>
 
-      <TargetEventCard raceName={p.targetRaceName || 'Target Event'} raceDate={p.targetRaceDate} daysLeft={daysLeft} />
+      <TargetEventCard profile={p} notify={onNotify} addEvent={onAddEvent} updateEvent={onUpdateEvent} deleteEvent={onDeleteEvent} setActiveEvent={onSetActiveEvent} />
 
       {/* quick-jump navigation chips */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">

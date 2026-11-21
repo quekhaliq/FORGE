@@ -101,6 +101,11 @@ export default function App() {
             addCustomWorkout={app.addCustomWorkout}
             onLaunchTimer={launchTimer}
             prs={prs}
+            onNotify={notify}
+            onAddEvent={app.addEvent}
+            onUpdateEvent={app.updateEvent}
+            onDeleteEvent={app.deleteEvent}
+            onSetActiveEvent={app.setActiveEvent}
             onShareProgress={() => setShareOpen(true)}
             daysLeft={daysLeft ?? 0}
             proteinConsumed={proteinConsumed}
