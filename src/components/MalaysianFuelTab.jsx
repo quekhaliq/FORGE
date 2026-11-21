@@ -1,26 +1,37 @@
 import { useState } from 'react'
-import { Plus, ChevronDown, RotateCcw, ShoppingBasket, Flame } from 'lucide-react'
+import { Plus, ChevronDown, ShoppingBasket, Flame, Sparkles } from 'lucide-react'
 import { malaysianMeals, mealPrepChecklist } from '../data/malaysianMeals.js'
-import { computeMetrics } from '../hooks/useAppState.js'
+import { computeMetrics, todayKey } from '../hooks/useAppState.js'
+import CustomMealModal from './CustomMealModal.jsx'
 import PageHeader from './PageHeader.jsx'
 import Modal from './Modal.jsx'
 
-const FILTERS = ['All', 'Halal', 'Vegetarian', 'Mamak']
+const FILTERS = ['All', 'My Custom', 'Halal', 'Vegetarian', 'Mamak']
 
-export default function MalaysianFuelTab({ state, profile, logProtein, removeProteinItem, resetDailyFood, togglePrepItem }) {
+export default function MalaysianFuelTab({ state, profile, logProtein, logProteinTo, removeProteinItemAt, resetDailyFood, togglePrepItem, customMeals, saveCustomMeal, deleteCustomMeal, selectedDate, setSelectedDate }) {
   const [filter, setFilter] = useState('All')
   const [showQuick, setShowQuick] = useState(false)
+  const [showCustom, setShowCustom] = useState(false)
   const [showPrep, setShowPrep] = useState(false)
   const [quickGrams, setQuickGrams] = useState('')
 
   const metrics = computeMetrics(profile)
   const target = metrics.proteinG
-  const consumed = state.nutrition.loggedItems.reduce((s, it) => s + it.grams, 0)
+  const dayItems = state.nutritionByDate?.[selectedDate] || []
+  const consumed = dayItems.reduce((s, it) => s + it.grams, 0)
+  const dayCal = dayItems.reduce((s, it) => s + (it.kcal || 0), 0)
   const pct = Math.min(100, Math.round((consumed / target) * 100))
   // dietary preference pre-filters the dish list (still overridable via pills)
   const isVeg = profile.dietaryPref === 'halal-vegetarian'
-  const prefMeals = isVeg ? malaysianMeals.filter((m) => m.tags.includes('Vegetarian')) : malaysianMeals
-  const filtered = filter === 'All' ? prefMeals : prefMeals.filter((m) => m.tags.includes(filter))
+  const baseMeals = isVeg ? malaysianMeals.filter((m) => m.tags.includes('Vegetarian')) : malaysianMeals
+  const allMeals = [
+    ...baseMeals,
+    ...(customMeals || []).map((m) => ({ id: 'c' + m.id, name: m.name, protein: m.protein, kcal: m.kcal, tags: ['My Custom'], customId: m.id })),
+  ]
+  const filtered =
+    filter === 'All' ? allMeals
+    : filter === 'My Custom' ? allMeals.filter((m) => m.tags.includes('My Custom'))
+    : allMeals.filter((m) => m.tags.includes(filter))
   const prepDone = Object.keys(state.nutrition.prepChecklist).length
 
   return (
@@ -30,6 +41,31 @@ export default function MalaysianFuelTab({ state, profile, logProtein, removePro
         title={"My Fuel"}
         subtitle={"Malaysian meals to power your next session."}
       />
+
+      {/* multi-day switcher */}
+      <div className="grid grid-cols-4 gap-2">
+        {[
+          { offset: -1, label: 'Yesterday' },
+          { offset: 0, label: 'Today' },
+          { offset: 1, label: 'Tomorrow' },
+          { offset: 2, label: '+2 Days' },
+        ].map(({ offset, label }) => {
+          const d = new Date()
+          d.setDate(d.getDate() + offset)
+          const key = d.toISOString().split('T')[0]
+          const sel = selectedDate === key
+          return (
+            <button
+              key={label}
+              onClick={() => setSelectedDate(key)}
+              className={`min-h-[52px] rounded-xl text-[10px] font-black uppercase transition flex flex-col items-center justify-center gap-0.5 ${sel ? 'pill-active' : 'pill-idle'}`}
+            >
+              <span>{label}</span>
+              <span className="tnum text-[9px] opacity-70">{d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
+            </button>
+          )
+        })}
+      </div>
       {/* protein progress card with computed metrics */}
       <div className="card space-y-3">
         <div className="flex items-center justify-between">
@@ -39,15 +75,28 @@ export default function MalaysianFuelTab({ state, profile, logProtein, removePro
               LBM {metrics.lbm}kg • {metrics.proteinPerKg}g/kg = <span className="text-ink font-bold">{target}g</span>
             </p>
           </div>
-          <span className="text-2xl font-black tnum">
-            <span className={consumed >= target ? 'text-orange-400' : 'text-ink'}>{consumed}</span>
-            <span className="text-sm text-mid">/{target}g</span>
+          <span className="flex flex-col items-end gap-1">
+            {consumed >= target && (
+              <span className="text-[10px] font-black uppercase px-2 py-1 rounded-lg" style={{ background: 'color-mix(in srgb, var(--uv) 18%, transparent)', color: 'var(--uv)' }}>
+                🎯 Target Hit!
+              </span>
+            )}
+            <span className="text-2xl font-black tnum">
+              <span className={consumed >= target ? 'text-orange-400' : 'text-ink'}>{consumed}</span>
+              <span className="text-sm text-mid">/{target}g</span>
+            </span>
           </span>
         </div>
         <div className="w-full bg-sunken h-3 rounded-full overflow-hidden border border-soft">
           <div className={`h-full transition-all duration-300 ${consumed >= target ? 'bg-orange-500' : 'bg-orange-500/70'}`} style={{ width: `${pct}%` }} />
         </div>
-        {/* calorie context line */}
+        {/* calorie context — calm and non-judgmental */}
+        <p className="text-[11px] tnum text-mid flex items-center gap-1.5">
+          <Flame className="w-3.5 h-3.5 text-orange-400" />
+          <span>
+            <span className="font-bold text-ink">{dayCal.toLocaleString()}</span> of {metrics.calories.toLocaleString()} kcal logged for {selectedDate === todayKey() ? 'today' : selectedDate} — steady, not perfect.
+          </span>
+        </p>
         <p className="text-[11px] tnum text-mid flex items-center gap-1.5">
           <Flame className="w-3.5 h-3.5 text-orange-400" />
           <span>
@@ -55,23 +104,26 @@ export default function MalaysianFuelTab({ state, profile, logProtein, removePro
             {metrics.floored && <span className="text-orange-500 font-bold"> (held at {metrics.floor.toLocaleString()} safety floor)</span>}
           </span>
         </p>
-        <div className="flex gap-2">
-          <button onClick={() => setShowQuick(true)} className="btn-primary flex-1 text-sm flex items-center justify-center gap-1.5">
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={() => setShowQuick(true)} className="btn-primary text-sm flex items-center justify-center gap-1.5">
             <Plus className="w-4 h-4" /> Quick Protein
           </button>
-          <button onClick={resetDailyFood} className="btn-ghost px-3 flex items-center gap-1.5 text-xs" aria-label="Reset today's protein">
-            <RotateCcw className="w-3.5 h-3.5" /> Reset
+          <button onClick={() => setShowCustom(true)} className="btn-ghost text-sm flex items-center justify-center gap-1.5">
+            <Sparkles className="w-4 h-4" /> Customize / Describe Meal
           </button>
         </div>
+        <button onClick={() => resetDailyFood(selectedDate)} className="text-[11px] text-faint underline w-full text-left min-h-[32px]">
+          Clear logged items for {selectedDate === todayKey() ? 'today' : selectedDate}
+        </button>
         {/* today's items */}
-        {state.nutrition.loggedItems.length > 0 && (
+        {dayItems.length > 0 && (
           <div className="space-y-1.5 pt-1">
-            {state.nutrition.loggedItems.map((it, i) => (
+            {dayItems.map((it, i) => (
               <div key={i} className="flex items-center justify-between text-xs bg-sunken border border-soft rounded-lg px-2.5 py-2">
                 <span className="text-soft truncate">{it.name}</span>
                 <span className="flex items-center gap-2 shrink-0">
                   <span className="tnum font-bold text-orange-400">+{it.grams}g</span>
-                  <button onClick={() => removeProteinItem(i)} className="text-mid hover:text-red-400 min-h-[44px] min-w-[44px] -my-2" aria-label="Remove">
+                  <button onClick={() => removeProteinItemAt(selectedDate, i)} className="text-mid hover:text-red-400 min-h-[44px] min-w-[44px] -my-2" aria-label="Remove">
                     ×
                   </button>
                 </span>
@@ -112,7 +164,7 @@ export default function MalaysianFuelTab({ state, profile, logProtein, removePro
               </p>
             </div>
             <button
-              onClick={() => logProtein({ name: m.name, grams: m.protein, at: new Date().toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }) })}
+              onClick={() => logProteinTo(selectedDate, { name: m.name, grams: m.protein, kcal: m.kcal, at: new Date().toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' }) })}
               className="surface-btn w-full text-xs font-bold min-h-[44px] rounded-xl"
             >
               + Add {m.protein}g
@@ -120,6 +172,19 @@ export default function MalaysianFuelTab({ state, profile, logProtein, removePro
           </div>
         ))}
       </div>
+
+      {showCustom && (
+        <CustomMealModal
+          open={showCustom}
+          onClose={() => setShowCustom(false)}
+          remaining={{ protein: Math.max(0, target - consumed), calories: Math.max(0, metrics.calories - dayCal) }}
+          goalLabel={metrics.goalLabel}
+          onSave={(entry) => logProteinTo(selectedDate, entry)}
+          onSaveCustom={saveCustomMeal}
+          savedCustom={customMeals}
+          onDeleteCustom={deleteCustomMeal}
+        />
+      )}
 
       {/* prep checklist accordion */}
       <div className="card !p-0 overflow-hidden">

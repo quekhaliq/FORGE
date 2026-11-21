@@ -43,6 +43,10 @@ function defaultState() {
       loggedItems: [],
       prepChecklist: {},
     },
+    // multi-day meal logging: { 'YYYY-MM-DD': [{name, grams, kcal, carbs, fat, at}] }
+    nutritionByDate: {},
+    // saved custom meals: [{ id, name, protein, kcal, carbs, fat }]
+    customMeals: [],
   }
 }
 
@@ -53,9 +57,11 @@ function loadState() {
     const parsed = JSON.parse(raw)
     if (!parsed || parsed.version !== 2 || !parsed.profile) throw new Error('bad schema')
     const merged = { ...defaultState(), ...parsed, profile: { ...defaultState().profile, ...parsed.profile } }
-    // daily auto-reset of logged items (checklist + profile preserved)
-    if (merged.nutrition.dateKey !== todayKey()) {
-      merged.nutrition = { ...merged.nutrition, dateKey: todayKey(), loggedItems: [] }
+    // daily auto-reset handled via nutritionByDate now
+    if (!merged.nutritionByDate) merged.nutritionByDate = {}
+    // migrate legacy single-day nutrition into nutritionByDate
+    if (merged.nutrition?.loggedItems?.length && !merged.nutritionByDate[merged.nutrition.dateKey]) {
+      merged.nutritionByDate[merged.nutrition.dateKey] = merged.nutrition.loggedItems
     }
     return merged
   } catch {
@@ -148,11 +154,37 @@ export function useAppState() {
     [],
   )
 
+  // multi-day logging: dateKey is 'YYYY-MM-DD' (today, yesterday, tomorrow, +2)
+  const logProteinTo = useCallback((dateKey, entry) => {
+    setState((s) => {
+      const byDate = { ...s.nutritionByDate }
+      byDate[dateKey] = [...(byDate[dateKey] || []), entry]
+      // keep legacy nutrition in sync for today so older code paths still work
+      const patch = { nutritionByDate: byDate }
+      if (dateKey === todayKey()) patch.nutrition = { ...s.nutrition, dateKey, loggedItems: byDate[dateKey] }
+      return { ...s, ...patch }
+    })
+  }, [])
+
   const logProtein = useCallback((entry) => {
-    setState((s) => ({
-      ...s,
-      nutrition: { ...s.nutrition, dateKey: todayKey(), loggedItems: [...s.nutrition.loggedItems, entry] },
-    }))
+    setState((s) => {
+      const d = todayKey()
+      const byDate = { ...s.nutritionByDate }
+      byDate[d] = [...(byDate[d] || []), entry]
+      return { ...s, nutritionByDate: byDate, nutrition: { ...s.nutrition, dateKey: d, loggedItems: byDate[d] } }
+    })
+  }, [])
+
+  const removeProteinItemAt = useCallback((dateKey, index) => {
+    setState((s) => {
+      const byDate = { ...s.nutritionByDate }
+      const items = [...(byDate[dateKey] || [])]
+      items.splice(index, 1)
+      byDate[dateKey] = items
+      const patch = { nutritionByDate: byDate }
+      if (dateKey === todayKey()) patch.nutrition = { ...s.nutrition, loggedItems: items }
+      return { ...s, ...patch }
+    })
   }, [])
 
   const removeProteinItem = useCallback((index) => {
@@ -163,8 +195,23 @@ export function useAppState() {
     })
   }, [])
 
-  const resetDailyFood = useCallback(() => {
-    setState((s) => ({ ...s, nutrition: { ...s.nutrition, dateKey: todayKey(), loggedItems: [] } }))
+  const resetDailyFood = useCallback((dateKey) => {
+    setState((s) => {
+      const byDate = { ...s.nutritionByDate }
+      byDate[dateKey || todayKey()] = []
+      const patch = { nutritionByDate: byDate }
+      if (!dateKey || dateKey === todayKey()) patch.nutrition = { ...s.nutrition, dateKey: todayKey(), loggedItems: [] }
+      return { ...s, ...patch }
+    })
+  }, [])
+
+  // custom meals library
+  const saveCustomMeal = useCallback((meal) => {
+    setState((s) => ({ ...s, customMeals: [...s.customMeals, { ...meal, id: Date.now() }] }))
+  }, [])
+
+  const deleteCustomMeal = useCallback((id) => {
+    setState((s) => ({ ...s, customMeals: s.customMeals.filter((m) => m.id !== id) }))
   }, [])
 
   const togglePrepItem = useCallback((id) => {
@@ -226,8 +273,12 @@ export function useAppState() {
     addOlyLog,
     deleteOlyLog,
     logProtein,
+    logProteinTo,
     removeProteinItem,
+    removeProteinItemAt,
     resetDailyFood,
+    saveCustomMeal,
+    deleteCustomMeal,
     togglePrepItem,
     exportDataJSON,
     importDataJSON,
