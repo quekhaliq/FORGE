@@ -10,8 +10,8 @@
    Semantic classes auto-adapt via .dark on <html>.
    ========================================================================== */
 :root {
-  --uv: #facc15;         /* neon yellow — reference accent */
-  --uv-bright: #fde047;  /* lighter yellow */
+  --uv: #f97316;         /* FORGE orange — brand accent */
+  --uv-bright: #fb923c;  /* lighter orange */
   --ink: #fafafa;
   --paper: #0a0a0a;      /* dark-first like reference */
   --paper-card: #131316;
@@ -22,8 +22,8 @@
 
 /* dark theme keeps the same tokens — the app is dark-first now */
 .dark {
-  --uv: #facc15;
-  --uv-bright: #fde047;
+  --uv: #f97316;
+  --uv-bright: #fb923c;
 }
 
 /* ============================================================================

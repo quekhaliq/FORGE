@@ -137,8 +137,8 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
       </div>
 
       <div className="pt-2 space-y-1">
-        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-yellow-400 flex items-center gap-2">
-          <span className="inline-block w-8 h-[3px] bg-yellow-400" /> Training Plan
+        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-400 flex items-center gap-2">
+          <span className="inline-block w-8 h-[3px] bg-orange-500" /> Training Plan
         </p>
         <h2 className="display-font text-3xl text-ink">Weekly Engine</h2>
         <p className="text-sm text-mid">Your session blueprint. Check off each session as you go.</p>

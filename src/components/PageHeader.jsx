@@ -3,8 +3,8 @@
 export default function PageHeader({ index, eyebrow = 'ATHLETE WORKSPACE', title, subtitle, onShare }) {
   return (
     <div className="space-y-2">
-      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-yellow-400 flex items-center gap-2">
-        <span className="inline-block w-8 h-[3px] bg-yellow-400" />
+      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-400 flex items-center gap-2">
+        <span className="inline-block w-8 h-[3px] bg-orange-500" />
         {eyebrow} / {index}
       </p>
       <div className="flex items-end justify-between gap-3">
