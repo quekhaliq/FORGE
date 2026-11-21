@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X, Plus, ChevronDown, Zap, Timer, CheckSquare, Square } from 'lucide-react'
 import { crossFitWeeks } from '../data/crossFitTracks.js'
 import OlyBlockProgram from './OlyBlockProgram.jsx'
+import RunBlockProgram from './RunBlockProgram.jsx'
 import EquipmentArt from './EquipmentArt.jsx'
 import PageHeader from './PageHeader.jsx'
 import TargetEventCard from './TargetEventCard.jsx'
@@ -34,6 +35,7 @@ const TODAY_INDEX = (new Date().getDay() + 6) % 7 // Mon=0
 export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWodEntry, addCustomWorkout, onLaunchTimer, prs, onShareProgress, daysLeft, proteinConsumed, proteinTarget, snatchPR }) {
   const p = state.profile
   const isOlyMode = p.sportMode === 'Olympic Weightlifting'
+  const [viewMode, setViewMode] = useState('strength')
   const [week, setWeek] = useState(Math.min(p.currentWeek || 1, 4))
   const weekProgram = crossFitWeeks[week - 1]
   const doneCount = weekProgram.filter((w) => state.schedule.find((s) => s.id === w.id)?.done).length
@@ -51,6 +53,17 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
     )
   }
 
+  if (viewMode === 'run') {
+    return (
+      <RunBlockProgram
+        state={state}
+        toggleWorkout={toggleWorkout}
+        updateWorkout={updateWorkout}
+        ensureWodEntry={ensureWodEntry}
+      />
+    )
+  }
+
   return (
     <div className="space-y-5">
       <PageHeader
@@ -59,6 +72,22 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
         subtitle={`Your weekly command centre for race-day readiness.`}
         onShare={onShareProgress}
       />
+
+      {/* training concept switcher */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => setViewMode('strength')}
+          className={`min-h-[44px] rounded-xl text-xs font-black uppercase transition ${viewMode === 'strength' ? 'pill-active' : 'pill-idle'}`}
+        >
+          Strength & WOD Block
+        </button>
+        <button
+          onClick={() => setViewMode('run')}
+          className={`min-h-[44px] rounded-xl text-xs font-black uppercase transition ${viewMode === 'run' ? 'pill-active' : 'pill-idle'}`}
+        >
+          Running Block
+        </button>
+      </div>
 
       <TargetEventCard raceName={p.targetRaceName || 'Target Event'} raceDate={p.targetRaceDate} daysLeft={daysLeft} />
 
