@@ -1,187 +1,253 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
 import Navbar from './components/Navbar.jsx'
 import OnboardingModal from './components/OnboardingModal.jsx'
 import TrainTab from './components/TrainTab.jsx'
 import OlyTrackerTab from './components/OlyTrackerTab.jsx'
 import MalaysianFuelTab from './components/MalaysianFuelTab.jsx'
-import ProfileFeedbackTab from './components/ProfileFeedbackTab.jsx'
 import ShareStoryModal from './components/ShareStoryModal.jsx'
 import WodTimerModal from './components/WodTimerModal.jsx'
 import AddToHomeScreenBanner from './components/AddToHomeScreenBanner.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
-import { useAppState, getAllTimePRs, daysUntil } from './hooks/useAppState.js'
-
+import {
+  useAppState,
+  getAllTimePRs,
+  daysUntil,
+  computeMetrics,
+} from './hooks/useAppState.js'
+const ProfileFeedbackTab = lazy(
+  () => import('./components/ProfileFeedbackTab.jsx'),
+)
+const tabs = ['train', 'oly', 'fuel', 'profile']
 export default function App() {
-  const app = useAppState()
-  const [activeTab, setActiveTab] = useState('train')
-  const [shareOpen, setShareOpen] = useState(false)
-  const [timerOpen, setTimerOpen] = useState(false)
-  const [timerPreset, setTimerPreset] = useState(null)
-  const [toast, setToast] = useState(null)
-  const [theme, setTheme] = useState(() => localStorage.getItem('forge_theme') || 'dark')
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
-    document.documentElement.classList.toggle('aurora', theme === 'aurora')
-    localStorage.setItem('forge_theme', theme)
-  }, [theme])
-
-  // cycles dark → light → aurora
-  const toggleTheme = useCallback(() => {
-    const order = ['dark', 'light', 'aurora']
-    setTheme((t) => order[(order.indexOf(t) + 1) % order.length])
-  }, [])
-
-  const p = app.state.profile
-  const daysLeft = daysUntil(p.targetRaceDate)
-  const prs = getAllTimePRs(app.state.olyLogs)
-  const completed = app.state.schedule.filter((w) => w.done).length
-  const targetProtein = Math.round(p.bodyWeightKg * (p.nutritionGoal || 1.8))
-  const proteinConsumed = app.state.nutrition.loggedItems.reduce((s, it) => s + it.grams, 0)
-
-  const notify = useCallback((message) => setToast({ message, id: Date.now() }), [])
-
-  const launchTimer = useCallback((preset = null) => {
-    setTimerPreset(preset)
-    setTimerOpen(true)
-  }, [])
-
-  const saveTimerResult = useCallback(
-    (result) => {
-      const wodEntry = app.state.schedule.find((w) => w.type === 'WOD' && !w.done)
-      if (wodEntry) {
-        app.updateWorkout(wodEntry.id, { notes: `[Timer: ${result}]`, done: true })
-        notify(`Result saved to ${wodEntry.title.slice(0, 24)}… ✓`)
-      } else {
-        notify('Timer result: ' + result)
-      }
-    },
-    [app, notify],
+  const app = useAppState(),
+    { state } = app,
+    p = state.profile
+  const [activeTab, tab] = useState(() =>
+      tabs.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'train',
+    ),
+    [setup, setSetup] = useState(false),
+    [share, setShare] = useState(false),
+    [timer, setTimer] = useState(null),
+    [toast, setToast] = useState(null)
+  const notify = useCallback(
+    (message) => setToast({ message, id: Date.now() }),
+    [],
   )
-
+  const nav = (t) => {
+    location.hash = t
+    tab(t)
+    window.scrollTo(0, 0)
+  }
   useEffect(() => {
-    if (!toast) return
-    const t = setTimeout(() => setToast(null), 2200)
-    return () => clearTimeout(t)
+    const sync = () =>
+      tab(
+        tabs.includes(location.hash.slice(1))
+          ? location.hash.slice(1)
+          : 'train',
+      )
+    window.addEventListener('hashchange', sync)
+    return () => window.removeEventListener('hashchange', sync)
+  }, [])
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', state.theme !== 'light')
+  }, [state.theme])
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 2200)
+      return () => clearTimeout(t)
+    }
   }, [toast])
-
-  // one-tap workout toggles give instant feedback
-  const toggleWorkout = useCallback(
-    (id) => {
-      const item = app.state.schedule.find((w) => w.id === id)
-      app.toggleWorkout(id)
-      if (item) notify(item.done ? 'Session unmarked' : `${item.day} session done ✓`)
-    },
-    [app, notify],
-  )
-
-  const logProtein = useCallback(
-    (entry) => {
-      app.logProtein(entry)
-      notify(`+${entry.grams}g protein logged ✓`)
-    },
-    [app, notify],
-  )
-
+  const prs = getAllTimePRs(state.olyLogs),
+    target = computeMetrics(p).proteinG,
+    protein = state.nutrition.loggedItems.reduce((s, i) => s + i.grams, 0),
+    days = daysUntil(p.targetRaceDate) ?? 0
+  const launch = (preset, id) =>
+    setTimer({
+      preset,
+      id: id || `${p.sportMode}_w1_d${(new Date().getDay() + 6) % 7}`,
+    })
+  const saveSession = (id, patch) => {
+    app.saveSession(id, patch)
+    notify(patch.completed === false ? 'Session unmarked' : 'Session saved')
+  }
+  const saved =
+    (fn, msg) =>
+    (...args) => {
+      fn(...args)
+      notify(msg)
+    }
   return (
-    <div className="min-h-screen pb-24 sm:pb-8">
+    <div className="min-h-screen pb-20 sm:pb-2">
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        daysLeft={daysLeft}
-        onShare={() => setShareOpen(true)}
-        onLaunchTimer={() => launchTimer(null)}
-        theme={theme}
-        onToggleTheme={toggleTheme}
+        daysLeft={days}
+        onShare={() => setShare(true)}
+        setActiveTab={nav}
+        onLaunchTimer={() => launch()}
+        onSetup={() => (state.onboarded ? nav('profile') : setSetup(true))}
+        theme={state.theme}
+        onToggleTheme={() =>
+          app.setPref('theme', state.theme === 'light' ? 'dark' : 'light')
+        }
       />
-
-      <main className="max-w-4xl mx-auto px-4 pt-4">
+      <main className="workspace">
         {activeTab === 'train' && (
           <TrainTab
-            state={app.state}
-            toggleWorkout={toggleWorkout}
-            updateWorkout={app.updateWorkout}
-            ensureWodEntry={app.ensureWodEntry}
-            addCustomWorkout={app.addCustomWorkout}
-            onLaunchTimer={launchTimer}
+            state={state}
+            saveSession={saveSession}
+            onLaunchTimer={launch}
             prs={prs}
-            onShareProgress={() => setShareOpen(true)}
-            daysLeft={daysLeft ?? 0}
-            proteinConsumed={proteinConsumed}
-            proteinTarget={targetProtein}
-            snatchPR={prs['Full Snatch'] || null}
+            onShareProgress={() => setShare(true)}
+            daysLeft={days}
+            proteinConsumed={protein}
+            proteinTarget={target}
+            snatchPR={prs['Full Snatch']}
+            onNavigate={nav}
           />
-        )}
+        )}{' '}
         {activeTab === 'oly' && (
           <OlyTrackerTab
-            state={app.state}
-            addOlyLog={(log) => {
-              app.addOlyLog(log)
-              notify(log.isPR ? `NEW PR! ${log.weight}kg ${log.variation} 🏆` : `${log.weight}kg ${log.variation} logged ✓`)
+            state={state}
+            addOlyLog={(l) => {
+              app.addOlyLog(l)
+              notify(l.isPR ? 'New personal record saved' : 'Lift saved')
             }}
-            deleteOlyLog={app.deleteOlyLog}
+            deleteOlyLog={saved(app.deleteOlyLog, 'Lift removed')}
           />
-        )}
+        )}{' '}
         {activeTab === 'fuel' && (
           <MalaysianFuelTab
-            state={app.state}
+            state={state}
             profile={p}
-            logProtein={logProtein}
-            removeProteinItem={app.removeProteinItem}
+            logProtein={(e) => {
+              app.logProtein(e)
+              notify(`Logged ${e.grams} g protein`)
+            }}
+            removeProteinItem={saved(
+              app.removeProteinItem,
+              'Food entry removed',
+            )}
             resetDailyFood={() => {
-              app.resetDailyFood()
-              notify("Today's protein reset")
+              if (confirm('Clear today’s food entries?')) {
+                app.resetDailyFood()
+                notify('Food log cleared')
+              }
             }}
-            togglePrepItem={app.togglePrepItem}
+            togglePrepItem={saved(app.togglePrepItem, 'Checklist saved')}
           />
-        )}
+        )}{' '}
         {activeTab === 'profile' && (
-          <ProfileFeedbackTab
-            state={app.state}
-            updateProfile={app.updateProfile}
-            exportDataJSON={() => {
-              app.exportDataJSON()
-              notify('Backup exported ✓')
-            }}
-            importDataJSON={app.importDataJSON}
-            resetAll={app.resetAll}
-            notify={notify}
-          />
+          <Suspense fallback={<p>Opening profile…</p>}>
+            <ProfileFeedbackTab
+              key={state.restoreId}
+              state={state}
+              updateProfile={app.updateProfile}
+              exportDataJSON={saved(app.exportDataJSON, 'Backup exported')}
+              importDataJSON={app.importDataJSON}
+              resetAll={app.resetAll}
+              notify={notify}
+              setPref={app.setPref}
+            />
+          </Suspense>
+        )}
+        {!state.onboarded && (
+          <div className="card mt-5 flex items-center justify-between gap-3 flex-wrap">
+            <p className="text-sm">Make this workspace yours.</p>
+            <div className="flex gap-3">
+              <button
+                className="btn-ghost text-xs"
+                onClick={app.skipOnboarding}
+              >
+                Skip for now
+              </button>
+              <button
+                className="btn-primary text-xs"
+                onClick={() => setSetup(true)}
+              >
+                Set up athlete profile
+              </button>
+            </div>
+          </div>
+        )}
+        {app.storageError && (
+          <p role="status">
+            Device storage unavailable. Export a backup before leaving.
+          </p>
         )}
       </main>
-
-      {!app.state.onboarded && (
-        <OnboardingModal onComplete={app.completeOnboarding} onSkip={app.skipOnboarding} />
+      <footer className="forge-footer">
+        <strong>FORGE.</strong>
+        <span>Built by quekhaliq</span>
+        <span className="motto">Built on Strength | Driven by Purpose</span>
+        <a
+          href="https://github.com/quekhaliq/FORGE"
+          target="_blank"
+          rel="noreferrer"
+        >
+          GitHub ↗
+        </a>
+        <button
+          onClick={() => {
+            nav('profile')
+            requestAnimationFrame(() =>
+              document.getElementById('feedback')?.scrollIntoView(),
+            )
+          }}
+        >
+          Feedback
+        </button>
+      </footer>
+      {setup && (
+        <OnboardingModal
+          onComplete={(patch) => {
+            app.completeOnboarding(patch)
+            setSetup(false)
+            notify('Athlete profile saved')
+          }}
+          onSkip={() => {
+            app.skipOnboarding()
+            setSetup(false)
+          }}
+        />
       )}
-
-      <ShareStoryModal
-        open={shareOpen}
-        onClose={() => setShareOpen(false)}
-        profile={p}
-        daysLeft={daysLeft}
-        completed={completed}
-        total={app.state.schedule.length}
-        proteinConsumed={proteinConsumed}
-        targetProtein={targetProtein}
-        prs={prs}
+      {share && (
+        <ShareStoryModal
+          open
+          onClose={() => setShare(false)}
+          profile={p}
+          daysLeft={days}
+          completed={
+            Object.values(state.sessionLogs).filter((x) => x.completed).length
+          }
+          total={p.sportMode === 'Olympic Weightlifting' ? 12 : 28}
+          proteinConsumed={protein}
+          targetProtein={target}
+          prs={prs}
+          notify={notify}
+        />
+      )}{' '}
+      {timer && (
+        <WodTimerModal
+          open
+          onClose={() => setTimer(null)}
+          preset={timer.preset}
+          onSaveResult={(result) =>
+            saveSession(timer.id, { scoreOrResult: result, completed: true })
+          }
+        />
+      )}
+      <AddToHomeScreenBanner
+        dismissed={state.installDismissed}
+        onDismiss={() => app.setPref('installDismissed', true)}
       />
-
-      <WodTimerModal
-        open={timerOpen}
-        onClose={() => setTimerOpen(false)}
-        preset={timerPreset}
-        onSaveResult={saveTimerResult}
-      />
-
-      <AddToHomeScreenBanner />
       <ScrollTopButton />
-
-      {/* non-intrusive toast */}
       {toast && (
-        <div key={toast.id} className="toast-enter fixed bottom-20 sm:bottom-6 inset-x-0 z-[55] flex justify-center pointer-events-none">
-          <span className="text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg max-w-[90%] truncate border-2" style={{ background: 'var(--paper-card)', color: 'var(--ink)', borderColor: 'var(--line-soft)' }}>
-            {toast.message}
-          </span>
+        <div
+          role="status"
+          key={toast.id}
+          className="toast-enter fixed bottom-20 sm:bottom-6 inset-x-0 z-[70] flex justify-center pointer-events-none"
+        >
+          <span className="card !py-3 text-sm">{toast.message}</span>
         </div>
       )}
     </div>

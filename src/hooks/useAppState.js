@@ -1,22 +1,30 @@
 import { useEffect, useState, useCallback } from 'react'
 
+import { backup } from './schema.js'
+import { crossFitWeeks } from '../data/crossFitTracks.js'
 const STORAGE_KEY = 'hybrid_prep_hub_my_v2'
 
-export function todayKey() {
-  return new Date().toISOString().split('T')[0]
+export function todayKey(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
 function defaultState() {
   return {
     version: 2,
     onboarded: false,
+    theme: 'dark',
+    installDismissed: false,
+    lastSync: null,
+    sessionLogs: {},
+    restoreId: 0,
     profile: {
       name: 'Athlete MY',
       sportMode: 'HYROX',
       skillLevel: 'Intermediate',
       division: 'Open',
       adaptiveNotes: '',
-      targetRaceDate: new Date(Date.now() + 28 * 86400000).toISOString().split('T')[0],
+      targetRaceName: 'HYROX Kuala Lumpur',
+      targetRaceDate: todayKey(new Date(Date.now() + 28 * 86400000)),
       bodyWeightKg: 70,
       heightCm: 170,
       bodyFatPct: 20,
@@ -30,12 +38,54 @@ function defaultState() {
       nutritionGoal: 1.8,
     },
     schedule: [
-      { id: 1, day: 'Monday', title: 'HIIT Engine + Sled/Erg Intervals', type: 'HIIT', done: false, notes: '' },
-      { id: 2, day: 'Tuesday', title: 'Zone 2 Aerobic Base Run (5–8km)', type: 'RUN', done: false, notes: '' },
-      { id: 3, day: 'Wednesday', title: 'HIIT Power + Wall Balls & Lunges', type: 'HIIT', done: false, notes: '' },
-      { id: 4, day: 'Thursday', title: 'Tempo / Threshold Run (4–6km)', type: 'RUN', done: false, notes: '' },
-      { id: 5, day: 'Friday', title: 'HIIT Race Sim + Compromised 1km Repeats', type: 'HIIT', done: false, notes: '' },
-      { id: 6, day: 'Saturday', title: 'Optional Recovery Run or Oly Technique', type: 'RUN', done: false, notes: '' },
+      {
+        id: 1,
+        day: 'Monday',
+        title: 'HIIT Engine + Sled/Erg Intervals',
+        type: 'HIIT',
+        done: false,
+        notes: '',
+      },
+      {
+        id: 2,
+        day: 'Tuesday',
+        title: 'Zone 2 Aerobic Base Run (5–8km)',
+        type: 'RUN',
+        done: false,
+        notes: '',
+      },
+      {
+        id: 3,
+        day: 'Wednesday',
+        title: 'HIIT Power + Wall Balls & Lunges',
+        type: 'HIIT',
+        done: false,
+        notes: '',
+      },
+      {
+        id: 4,
+        day: 'Thursday',
+        title: 'Tempo / Threshold Run (4–6km)',
+        type: 'RUN',
+        done: false,
+        notes: '',
+      },
+      {
+        id: 5,
+        day: 'Friday',
+        title: 'HIIT Race Sim + Compromised 1km Repeats',
+        type: 'HIIT',
+        done: false,
+        notes: '',
+      },
+      {
+        id: 6,
+        day: 'Saturday',
+        title: 'Optional Recovery Run or Oly Technique',
+        type: 'RUN',
+        done: false,
+        notes: '',
+      },
     ],
     olyLogs: [],
     nutrition: {
@@ -46,18 +96,35 @@ function defaultState() {
   }
 }
 
+export function restore(raw) {
+  const value = backup.parse(raw),
+    defaults = defaultState(),
+    s = {
+      ...defaults,
+      ...value,
+      profile: { ...defaults.profile, ...value.profile },
+    }
+  if (!value.sessionLogs)
+    crossFitWeeks.forEach((week, w) =>
+      week.forEach((day, d) => {
+        const old = s.schedule.find((x) => x.id === day.id)
+        if (old)
+          s.sessionLogs[`${s.profile.sportMode}_w${w + 1}_d${d}`] = {
+            completed: old.done,
+            notes: old.notes,
+            scoreOrResult: old.result || '',
+          }
+      }),
+    )
+  if (s.nutrition.dateKey !== todayKey())
+    s.nutrition = { ...s.nutrition, dateKey: todayKey(), loggedItems: [] }
+  return s
+}
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultState()
-    const parsed = JSON.parse(raw)
-    if (!parsed || parsed.version !== 2 || !parsed.profile) throw new Error('bad schema')
-    const merged = { ...defaultState(), ...parsed, profile: { ...defaultState().profile, ...parsed.profile } }
-    // daily auto-reset of logged items (checklist + profile preserved)
-    if (merged.nutrition.dateKey !== todayKey()) {
-      merged.nutrition = { ...merged.nutrition, dateKey: todayKey(), loggedItems: [] }
-    }
-    return merged
+    return restore(JSON.parse(raw))
   } catch {
     return defaultState()
   }
@@ -66,9 +133,59 @@ function loadState() {
 export function useAppState() {
   const [state, setState] = useState(loadState)
 
+  const [storageError, setStorageError] = useState(false)
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+      queueMicrotask(() => setStorageError(false))
+    } catch {
+      queueMicrotask(() => setStorageError(true))
+    }
   }, [state])
+  useEffect(() => {
+    const rollover = () =>
+      setState((s) =>
+        s.nutrition.dateKey === todayKey()
+          ? s
+          : {
+              ...s,
+              nutrition: {
+                ...s.nutrition,
+                dateKey: todayKey(),
+                loggedItems: [],
+              },
+            },
+      )
+    const id = setInterval(rollover, 30000)
+    window.addEventListener('focus', rollover)
+    return () => {
+      clearInterval(id)
+      window.removeEventListener('focus', rollover)
+    }
+  }, [])
+  const setPref = useCallback((k, v) => setState((s) => ({ ...s, [k]: v })), [])
+  const saveSession = useCallback(
+    (id, patch) =>
+      setState((s) => ({
+        ...s,
+        sessionLogs: {
+          ...s.sessionLogs,
+          [id]: {
+            completed: false,
+            selectedRunType: 'zone2',
+            distanceKm: 0,
+            avgPace: '',
+            scoreOrResult: '',
+            rpe: 0,
+            notes: '',
+            customProgram: null,
+            ...s.sessionLogs[id],
+            ...patch,
+          },
+        },
+      })),
+    [],
+  )
 
   const completeOnboarding = useCallback((patch) => {
     setState((s) => ({
@@ -78,7 +195,10 @@ export function useAppState() {
     }))
   }, [])
 
-  const skipOnboarding = useCallback(() => setState((s) => ({ ...s, onboarded: true })), [])
+  const skipOnboarding = useCallback(
+    () => setState((s) => ({ ...s, onboarded: true })),
+    [],
+  )
 
   const updateProfile = useCallback(
     (patch) => setState((s) => ({ ...s, profile: { ...s.profile, ...patch } })),
@@ -88,7 +208,9 @@ export function useAppState() {
   const toggleWorkout = useCallback((id) => {
     setState((s) => ({
       ...s,
-      schedule: s.schedule.map((w) => (w.id === id ? { ...w, done: !w.done } : w)),
+      schedule: s.schedule.map((w) =>
+        w.id === id ? { ...w, done: !w.done } : w,
+      ),
     }))
   }, [])
 
@@ -125,7 +247,15 @@ export function useAppState() {
         ...s,
         schedule: [
           ...s.schedule,
-          { id, day: '', title, type: 'WOD', done: false, notes: '', result: '' },
+          {
+            id,
+            day: '',
+            title,
+            type: 'WOD',
+            done: false,
+            notes: '',
+            result: '',
+          },
         ],
       }
     })
@@ -134,19 +264,40 @@ export function useAppState() {
   const addOlyLog = useCallback((log) => {
     setState((s) => ({
       ...s,
-      olyLogs: [...s.olyLogs, { ...log, id: Date.now(), date: new Date().toLocaleDateString('en-MY', { day: 'numeric', month: 'short' }) }],
+      olyLogs: [
+        ...s.olyLogs,
+        {
+          ...log,
+          liftFocus: log.variation,
+          complexScheme: log.sets,
+          waveSteps: log.waveSteps || [],
+          topWeightKg: log.weight,
+          refPRKg: getAllTimePRs(s.olyLogs)[log.variation] || 0,
+          technicalCues: log.feedback,
+          id: Date.now(),
+          date: todayKey(),
+        },
+      ],
     }))
   }, [])
 
   const deleteOlyLog = useCallback(
-    (id) => setState((s) => ({ ...s, olyLogs: s.olyLogs.filter((l) => l.id !== id) })),
+    (id) =>
+      setState((s) => ({
+        ...s,
+        olyLogs: s.olyLogs.filter((l) => l.id !== id),
+      })),
     [],
   )
 
   const logProtein = useCallback((entry) => {
     setState((s) => ({
       ...s,
-      nutrition: { ...s.nutrition, dateKey: todayKey(), loggedItems: [...s.nutrition.loggedItems, entry] },
+      nutrition: {
+        ...s.nutrition,
+        dateKey: todayKey(),
+        loggedItems: [...s.nutrition.loggedItems, entry],
+      },
     }))
   }, [])
 
@@ -159,7 +310,10 @@ export function useAppState() {
   }, [])
 
   const resetDailyFood = useCallback(() => {
-    setState((s) => ({ ...s, nutrition: { ...s.nutrition, dateKey: todayKey(), loggedItems: [] } }))
+    setState((s) => ({
+      ...s,
+      nutrition: { ...s.nutrition, dateKey: todayKey(), loggedItems: [] },
+    }))
   }, [])
 
   const togglePrepItem = useCallback((id) => {
@@ -172,7 +326,9 @@ export function useAppState() {
   }, [])
 
   const exportDataJSON = useCallback(() => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' })
+    const blob = new Blob([JSON.stringify(state, null, 2)], {
+      type: 'application/json',
+    })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -191,7 +347,8 @@ export function useAppState() {
             if (!imported || imported.version !== 2 || !imported.profile) {
               throw new Error('Invalid backup: schema version mismatch')
             }
-            setState({ ...defaultState(), ...imported, profile: { ...defaultState().profile, ...imported.profile } })
+            const checked = restore(imported)
+            setState({ ...checked, restoreId: Date.now() })
             resolve()
           } catch (e) {
             reject(e)
@@ -212,6 +369,9 @@ export function useAppState() {
   return {
     state,
     completeOnboarding,
+    setPref,
+    saveSession,
+    storageError,
     skipOnboarding,
     updateProfile,
     toggleWorkout,
@@ -240,7 +400,7 @@ export function getAllTimePRs(olyLogs) {
 
 export function daysUntil(dateStr) {
   if (!dateStr) return null
-  const diff = Math.ceil((new Date(dateStr) - new Date()) / 86400000)
+  const diff = (Date.parse(dateStr) - Date.parse(todayKey())) / 86400000
   return diff >= 0 ? diff : null
 }
 
@@ -275,14 +435,23 @@ export function computeMetrics(profile) {
   const age = Math.min(90, Math.max(14, profile.age ?? 30))
   // activity multiplier from training days/week
   const days = Math.min(7, Math.max(0, profile.activityDays ?? 4))
-  const activityMult = days === 0 ? 1.2 : days <= 2 ? 1.375 : days <= 4 ? 1.55 : days <= 6 ? 1.725 : 1.9
+  const activityMult =
+    days === 0
+      ? 1.2
+      : days <= 2
+        ? 1.375
+        : days <= 4
+          ? 1.55
+          : days <= 6
+            ? 1.725
+            : 1.9
 
   const lbm = weight * (1 - bf / 100)
 
   // protein: overlap of 1.8–2.2 g/kg BW and ~2.2–2.4 g/kg LBM → take the higher, cap sanely
-  const proteinPerKgBW = Math.min(2.2, Math.max(1.8, 2.0))
-  const proteinByLBM = Math.min(2.4, Math.max(2.2, 2.3)) * lbm
-  const proteinG = Math.round(Math.min(proteinByLBM, proteinPerKgBW * weight + 40))
+  const proteinG = Math.round(
+    Math.max(1.8 * weight, Math.min(2.3 * lbm, 2.2 * weight)),
+  )
   const proteinCal = proteinG * 4
 
   // Mifflin-St Jeor
@@ -292,7 +461,8 @@ export function computeMetrics(profile) {
       : 10 * weight + 6.25 * height - 5 * age + 5
   const tdee = Math.round(bmr * activityMult)
 
-  const goal = GOALS.find((g) => g.id === (profile.goal || 'recomp')) || GOALS[2]
+  const goal =
+    GOALS.find((g) => g.id === (profile.goal || 'recomp')) || GOALS[2]
   const targetCal = Math.round(tdee + goal.calorieAdjust)
 
   // safety floors
@@ -359,16 +529,20 @@ export function prescribe(profile) {
     const ratePerWeek = goalId === 'bulk' ? 0.35 : 0.25
     const horizonWeeks = goalId === 'bulk' ? 16 : 12
     targetWeight = Math.round((weight + ratePerWeek * horizonWeeks) * 10) / 10
-    targetBf = Math.min(healthy.max + 4, Math.round(bf + ratePerWeek * horizonWeeks * 0.35 * (100 / weight)))
+    targetBf = Math.min(
+      healthy.max + 4,
+      Math.round(bf + ratePerWeek * horizonWeeks * 0.35 * (100 / weight)),
+    )
     weeks = horizonWeeks
     weeklyRate = ratePerWeek
   } else {
     // recomp: weight roughly stable, BF down 3–4 points
     targetBf = Math.max(healthy.min, bf - 4)
-    targetWeight = Math.round(m.lbm / (1 - targetBf / 100) * 10) / 10
-    weeklyRate = Math.abs(targetWeight - weight) > 0.5
-      ? Math.abs(targetWeight - weight) / 10
-      : 0.1
+    targetWeight = Math.round((m.lbm / (1 - targetBf / 100)) * 10) / 10
+    weeklyRate =
+      Math.abs(targetWeight - weight) > 0.5
+        ? Math.abs(targetWeight - weight) / 10
+        : 0.1
     weeks = 10
   }
 
@@ -378,7 +552,7 @@ export function prescribe(profile) {
   // goal-specific nutritionist rules (Malaysian context)
   const rulesByGoal = {
     lean: [
-      'Post-workout: keep 30–40g protein + a fist of carbs within 90 min after training (e.g. nasi leak swap — grilled chicken + rice, less sambal).',
+      'Post-workout: keep 30–40g protein + a fist of carbs within 90 min after training (e.g. nasi lemak swap — grilled chicken + rice, less sambal).',
       'Swap liquid & hidden calories: teh tarik → teh O kosong, gravy/oil-heavy dishes → grilled or souped versions (sup ayam over goreng).',
       'Hydration: 3–4 litres of water daily — thirst often reads as hunger, especially in Malaysian heat.',
     ],

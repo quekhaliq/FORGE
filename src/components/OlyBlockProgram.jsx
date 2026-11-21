@@ -7,12 +7,12 @@ const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'S
 const TODAY_INDEX = (new Date().getDay() + 6) % 7
 const TODAY_NAME = DAYS_OF_WEEK[TODAY_INDEX]
 
-export default function OlyBlockProgram({ state, toggleWorkout, updateWorkout, ensureWodEntry, prs }) {
-  const p = state.profile
-  const [week, setWeek] = useState(Math.min(p.currentWeek || 1, 4))
+export default function OlyBlockProgram({ state, saveSession, prs, week, setWeek }) {
+  const keyFor=d=>`Olympic Weightlifting_w${week}_d${DAYS_OF_WEEK.indexOf(d.dayName)}`
+  const read=d=>{const l=state.sessionLogs[keyFor(d)];return l?{done:l.completed,notes:l.notes,result:l.scoreOrResult}:null}
   const [openDay, setOpenDay] = useState(null)
   const block = olyBlock[week - 1]
-  const doneCount = block.days.filter((d) => state.schedule.find((s) => s.id === d.day)?.done).length
+  const doneCount = block.days.filter((d) => read(d)?.done).length
 
   return (
     <div className="space-y-5">
@@ -73,7 +73,7 @@ export default function OlyBlockProgram({ state, toggleWorkout, updateWorkout, e
         {/* dotted day plan */}
         <div className="px-4 pb-2 pt-1">
           {block.days.map((d) => {
-            const log = state.schedule.find((s) => s.id === d.day)
+            const log = read(d)
             const isToday = d.dayName === TODAY_NAME
             return (
               <button key={d.day} onClick={() => setOpenDay(openDay === d.day ? null : d.day)} className="plan-row w-full text-left min-h-[56px]">
@@ -96,17 +96,15 @@ export default function OlyBlockProgram({ state, toggleWorkout, updateWorkout, e
           <DayCard
             key={d.day}
             dayData={d}
-            log={state.schedule.find((s) => s.id === d.day)}
+            log={read(d)}
             prs={prs}
             open={openDay === d.day}
             onToggleOpen={() => setOpenDay(openDay === d.day ? null : d.day)}
             onToggleDone={() => {
-              ensureWodEntry(d.day, `${d.focus} — ${d.dayName}`)
-              toggleWorkout(d.day)
+              saveSession(keyFor(d),{completed:!read(d)?.done})
             }}
             onLog={(patch) => {
-              ensureWodEntry(d.day, `${d.focus} — ${d.dayName}`)
-              updateWorkout(d.day, patch)
+              saveSession(keyFor(d),{notes:patch.notes,completed:patch.done,scoreOrResult:patch.result||patch.notes})
             }}
           />
         ))}

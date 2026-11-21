@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { X, Download } from 'lucide-react'
+import Modal from './Modal.jsx'
+import { Download } from 'lucide-react'
 
 export default function ShareStoryModal({
   open,
@@ -10,7 +11,7 @@ export default function ShareStoryModal({
   total,
   proteinConsumed,
   targetProtein,
-  prs,
+  prs, notify,
 }) {
   const [downloading, setDownloading] = useState(false)
   const cardRef = useRef(null)
@@ -23,30 +24,23 @@ export default function ShareStoryModal({
   const download = () => {
     setDownloading(true)
     import('html2canvas').then(({ default: html2canvas }) => {
-      html2canvas(cardRef.current, { scale: 3, backgroundColor: '#09090b' }).then((canvas) => {
+      return html2canvas(cardRef.current, { scale: 3, backgroundColor: '#09090b' }).then((canvas) => {
         const link = document.createElement('a')
         link.download = `hybrid-prep-${Date.now()}.png`
         link.href = canvas.toDataURL('image/png')
         link.click()
-        setDownloading(false)
+        notify('Story PNG downloaded')
       })
-    })
+    }).catch(()=>notify('PNG export failed. Please try again.')).finally(()=>setDownloading(false))
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
-      <div className="bg-sunken border border-soft rounded-2xl p-5 max-w-sm w-full space-y-4 max-h-[95vh] overflow-y-auto">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-sm">9:16 Story Card</h3>
-          <button onClick={onClose} className="w-[44px] h-[44px] flex items-center justify-center text-mid hover:text-ink -mr-2" aria-label="Close">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Modal title="9:16 Story Card" onClose={onClose}><div className="space-y-4">
 
         <div
           ref={cardRef}
-          className="rounded-2xl p-5 flex flex-col justify-between text-ink border border-soft"
-          style={{ aspectRatio: '9/16', background: 'radial-gradient(circle at 80% 0%, rgba(139,92,246,0.12), transparent 45%), linear-gradient(170deg, #09090b 55%, #18181b)' }}
+          className="story-print rounded-2xl p-5 flex flex-col justify-between text-ink border border-soft"
+          style={{ aspectRatio: '9/16', background: '#141517',color:'#fff','--muted':'#b8b8b8','--ink':'#fafafa' }}
         >
           <div>
             <div className="flex items-center gap-2">
@@ -101,6 +95,6 @@ export default function ShareStoryModal({
           <Download className="w-4 h-4" /> {downloading ? 'Rendering…' : 'Download PNG'}
         </button>
       </div>
-    </div>
+    </Modal>
   )
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Volume2, VolumeX, Play, Pause, RotateCcw, Save } from 'lucide-react'
+import Modal from './Modal.jsx'
+import { Volume2, VolumeX, Play, Pause, RotateCcw, Save } from 'lucide-react'
 
 const PREP_SECONDS = 10
 
@@ -23,12 +24,12 @@ const MODES = [
 ]
 
 export default function WodTimerModal({ open, onClose, preset, onSaveResult }) {
-  const [mode, setMode] = useState(preset?.mode || 'amrap')
-  const [minutes, setMinutes] = useState(preset?.mode === 'amrap' ? Math.floor((preset?.durationSec || 1200) / 60) : 20)
+  const [mode, setMode] = useState(preset?.mode==='forTime'?'amrap':preset?.mode||'amrap')
+  const [minutes, setMinutes] = useState(['amrap','forTime'].includes(preset?.mode) ? (preset?.durationSec || 1200) / 60 : 20)
   const [intervalSec, setIntervalSec] = useState(preset?.intervalSec || 60)
   const [rounds, setRounds] = useState(preset?.rounds || 8)
-  const [workSec, setWorkSec] = useState(45)
-  const [restSec, setRestSec] = useState(30)
+  const [workSec, setWorkSec] = useState(preset?.durationSec||45)
+  const [restSec, setRestSec] = useState(preset?.intervalSec||30)
   const [muted, setMuted] = useState(false)
   const [result, setResult] = useState('')
 
@@ -44,7 +45,9 @@ export default function WodTimerModal({ open, onClose, preset, onSaveResult }) {
   })
 
   const audioCtxRef = useRef(null)
+  useEffect(()=>()=>{audioCtxRef.current?.close().catch(()=>{})},[])
   const getCtx = () => {
+    if(!(window.AudioContext||window.webkitAudioContext))return null
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)()
     }
@@ -53,8 +56,8 @@ export default function WodTimerModal({ open, onClose, preset, onSaveResult }) {
 
   const start = () => {
     const ctx = getCtx()
-    if (ctx.state === 'suspended') ctx.resume()
-    setTimer({ phase: 'prep', secondsLeft: PREP_SECONDS + 1, round: 1, elapsed: 0 })
+    if (ctx?.state === 'suspended') ctx.resume().catch(()=>{})
+    setTimer({ phase: 'prep', secondsLeft: PREP_SECONDS, round: 1, elapsed: 0 })
     setResult('')
   }
 
@@ -87,6 +90,7 @@ export default function WodTimerModal({ open, onClose, preset, onSaveResult }) {
       }
 
       if (t.phase === 'work') {
+        if(t.secondsLeft>1){setTimer({...next,secondsLeft:t.secondsLeft-1});return}
         if (cfg.mode === 'intervals') {
           if (t.round >= cfg.rounds) {
             if (!cfg.muted) beep(ctx, 660, 0.5)
@@ -128,7 +132,7 @@ export default function WodTimerModal({ open, onClose, preset, onSaveResult }) {
   if (!open) return null
 
   const { phase, secondsLeft, round, elapsed } = timer
-  const phaseColor = phase === 'work' ? 'text-orange-400' : phase === 'rest' ? 'text-red-500' : 'text-orange-400'
+  const phaseColor = phase === 'work' ? 'text-green-400' : phase === 'rest' ? 'text-red-500' : 'text-amber-400'
 
   const idleDisplay = mode === 'amrap' ? minutes * 60 : mode === 'emom' ? intervalSec : workSec
   const display = phase === 'idle' ? idleDisplay : phase === 'done' ? 0 : Math.max(0, secondsLeft)
@@ -143,14 +147,7 @@ export default function WodTimerModal({ open, onClose, preset, onSaveResult }) {
     : ''
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4">
-      <div className="bg-sunken border-2 border-orange-500/50 rounded-2xl p-5 max-w-sm w-full space-y-4 max-h-[95vh] overflow-y-auto">
-        <div className="flex items-center justify-between">
-          <h3 className="display-title text-xl text-orange-400">Box WOD Timer</h3>
-          <button onClick={onClose} className="w-[44px] h-[44px] flex items-center justify-center text-mid hover:text-ink -mr-2" aria-label="Close">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Modal title="Box WOD Timer" onClose={onClose}><div className="space-y-4">
 
         {phase === 'idle' && (
           <>
@@ -194,7 +191,7 @@ export default function WodTimerModal({ open, onClose, preset, onSaveResult }) {
           <div className="text-center space-y-2 py-2">
             <p className={`text-xs font-black uppercase tracking-widest ${phaseColor}`}>{phaseLabel}</p>
             <p className={`tnum font-black ${phaseColor} ${phase === 'prep' ? 'text-7xl' : 'text-8xl'}`}>
-              {phase === 'prep' ? Math.max(0, secondsLeft - 1) : `${mm}:${ss}`}
+              {phase === 'prep' ? secondsLeft : `${mm}:${ss}`}
             </p>
             {mode === 'amrap' && phase === 'work' && (
               <p className="tnum text-xs text-mid">
@@ -258,7 +255,7 @@ export default function WodTimerModal({ open, onClose, preset, onSaveResult }) {
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   )
 }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Share, Download, Smartphone } from 'lucide-react'
 
-const DISMISS_KEY = 'forge_a2hs_dismissed'
+
 
 // true when running as an installed PWA (no install prompt needed)
 function isStandalone() {
@@ -15,14 +15,14 @@ function isStandalone() {
   }
 }
 
-export default function AddToHomeScreenBanner() {
+export default function AddToHomeScreenBanner({dismissed,onDismiss}) {
   const [show, setShow] = useState(false)
   const [platform, setPlatform] = useState(null) // 'ios' | 'android' | null
   const [deferredPrompt, setDeferredPrompt] = useState(null)
 
   useEffect(() => {
     if (isStandalone()) return // already installed
-    if (localStorage.getItem(DISMISS_KEY) === 'v1') return // they dismissed it
+    if (dismissed) return // they dismissed it
 
     const ua = navigator.userAgent || ''
     const iPad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
@@ -53,11 +53,11 @@ export default function AddToHomeScreenBanner() {
       clearTimeout(t)
       window.removeEventListener('beforeinstallprompt', onPrompt)
     }
-  }, [])
+  }, [dismissed])
 
   const dismiss = () => {
     setShow(false)
-    localStorage.setItem(DISMISS_KEY, 'v1')
+    onDismiss()
   }
 
   const installAndroid = async () => {

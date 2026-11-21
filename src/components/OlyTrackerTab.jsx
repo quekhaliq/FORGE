@@ -197,7 +197,7 @@ export default function OlyTrackerTab({ state, addOlyLog, deleteOlyLog }) {
                         </button>
                       )}
                       <button
-                        onClick={() => deleteOlyLog(log.id)}
+                        onClick={() => {if(confirm('Delete this lift entry?'))deleteOlyLog(log.id)}}
                         className="w-[44px] h-[44px] flex items-center justify-center text-mid hover:text-red-400"
                         aria-label="Delete lift"
                       >

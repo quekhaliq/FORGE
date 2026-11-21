@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { CloudUpload, CloudDownload, LogOut, Loader2, User } from 'lucide-react'
 import { watchAuth, signInGoogle, getRedirectResultSafe, signOutUser, cloudPull, cloudPush } from '../hooks/firebase.js'
 
-export default function CloudSyncCard({ state, importDataJSON, notify }) {
+export default function CloudSyncCard({ state, importDataJSON, notify, setPref }) {
   const [user, setUser] = useState(null)
   const [authReady, setAuthReady] = useState(false)
   const [busy, setBusy] = useState(null) // 'push' | 'pull' | 'signin'
-  const [lastSynced, setLastSynced] = useState(localStorage.getItem('forge_last_sync') || null)
+  const lastSynced=state.lastSync
 
   useEffect(() => {
     const unsub = watchAuth((u) => {
@@ -18,8 +18,7 @@ export default function CloudSyncCard({ state, importDataJSON, notify }) {
 
   const markSynced = () => {
     const t = new Date().toLocaleString('en-MY')
-    localStorage.setItem('forge_last_sync', t)
-    setLastSynced(t)
+    setPref('lastSync',t)
   }
 
   const afterSignIn = async (u) => {

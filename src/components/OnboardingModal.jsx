@@ -14,8 +14,7 @@ export default function OnboardingModal({ onComplete, onSkip }) {
   const [bodyFatPct, setBodyFatPct] = useState(20)
   const [sex, setSex] = useState('male')
   const [goal, setGoal] = useState('recomp')
-  const [targetWeightKg, setTargetWeightKg] = useState(70)
-  const [targetBodyFatPct, setTargetBodyFatPct] = useState(15)
+  const [age,setAge]=useState(30),[activityDays,setActivityDays]=useState(4)
   const [dietaryPref, setDietaryPref] = useState('halal-omnivore')
   // captured once per mount so render stays pure
   const [defaultRaceDate] = useState(() => new Date(Date.now() + 28 * 86400000).toISOString().split('T')[0])
@@ -30,8 +29,7 @@ export default function OnboardingModal({ onComplete, onSkip }) {
       bodyFatPct: num(bodyFatPct, 20),
       sex,
       goal,
-      targetWeightKg: num(targetWeightKg, 70),
-      targetBodyFatPct: num(targetBodyFatPct, 15),
+      age:Number(age),activityDays:Number(activityDays),
       dietaryPref,
     })
 
@@ -154,12 +152,12 @@ export default function OnboardingModal({ onComplete, onSkip }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Target Weight (kg)</label>
-                <input type="number" step="0.1" value={targetWeightKg} onChange={(e) => setTargetWeightKg(e.target.value)} className="input tnum" />
+                <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Age (years)</label>
+                <input aria-label="Age" type="number" min="18" max="90" value={age} onChange={e=>setAge(e.target.value)} className="input tnum" />
               </div>
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Target Body Fat (%)</label>
-                <input type="number" step="0.5" value={targetBodyFatPct} onChange={(e) => setTargetBodyFatPct(e.target.value)} className="input tnum" />
+                <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Training days / week</label>
+                <input aria-label="Training days per week" type="number" min="0" max="7" value={activityDays} onChange={e=>setActivityDays(e.target.value)} className="input tnum" />
               </div>
             </div>
             <div>
@@ -182,7 +180,7 @@ export default function OnboardingModal({ onComplete, onSkip }) {
                 heightCm: parseFloat(heightCm) || 170,
                 bodyFatPct: parseFloat(bodyFatPct) || 20,
                 sex,
-                goal,
+                goal,age:Number(age),activityDays:Number(activityDays),
               })
               return (
                 <p className="text-[11px] p-2.5 rounded-xl bg-sunken">
@@ -208,7 +206,7 @@ export default function OnboardingModal({ onComplete, onSkip }) {
               Next <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
-            <button onClick={finish} className="btn-primary flex-1 flex items-center justify-center gap-1.5">
+            <button disabled={!(bodyWeightKg>=30&&bodyWeightKg<=650&&heightCm>=120&&heightCm<=300&&bodyFatPct>=3&&bodyFatPct<=60&&age>=18&&age<=90&&activityDays!==''&&Number.isInteger(Number(activityDays))&&activityDays>=0&&activityDays<=7)} onClick={finish} className="btn-primary flex-1 flex items-center justify-center gap-1.5">
               <Zap className="w-4 h-4" /> Start Training
             </button>
           )}

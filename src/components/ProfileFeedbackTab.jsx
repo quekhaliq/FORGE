@@ -5,11 +5,12 @@ import { GOALS, DIETARY_PREFS, computeMetrics, prescribe } from '../hooks/useApp
 import CloudSyncCard from './CloudSyncCard.jsx'
 import PageHeader from './PageHeader.jsx'
 
-export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSON, importDataJSON, resetAll, notify }) {
+export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSON, importDataJSON, resetAll, notify, setPref }) {
   const [fbCategory, setFbCategory] = useState(FEEDBACK_CATEGORIES[0])
   const [fbText, setFbText] = useState('')
   const fileRef = useRef(null)
   const p = state.profile
+  const [draft,setDraft]=useState(p),[division,setDivision]=useState(p.division)
 
   const saveTraining = (e) => {
     e.preventDefault()
@@ -33,8 +34,9 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
       bodyFatPct: parseFloat(fd.get('bodyFatPct')) || 20,
       sex: fd.get('sex') || 'male',
       goal: fd.get('goal') || 'recomp',
-      targetWeightKg: parseFloat(fd.get('targetWeightKg')) || 70,
-      targetBodyFatPct: parseFloat(fd.get('targetBodyFatPct')) || 15,
+      age:Number(fd.get('age')),activityDays:Number(fd.get('activityDays')),
+      targetWeightKg:prescribe(draft).targetWeight,targetBodyFatPct:prescribe(draft).targetBf,
+      targetRaceName:String(fd.get('targetRaceName')||'Target event').trim(),
       dietaryPref: fd.get('dietaryPref') || 'halal-omnivore',
       targetRaceDate: fd.get('targetRaceDate'),
     })
@@ -94,14 +96,14 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
           </div>
           <div>
             <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Division</label>
-            <select name="division" defaultValue={p.division} className="input">
+            <select name="division" value={division} onChange={e=>setDivision(e.target.value)} className="input">
               {DIVISIONS.map((d) => (
                 <option key={d}>{d}</option>
               ))}
             </select>
           </div>
         </div>
-        {p.division === 'Adaptive' && (
+        {division === 'Adaptive' && (
           <div>
             <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Adaptive Modification Notes</label>
             <textarea name="adaptiveNotes" rows={2} defaultValue={p.adaptiveNotes} placeholder="e.g. Seated sled push, handcycle for runs…" className="input" />
@@ -111,7 +113,7 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
       </form>
 
       {/* Athlete Metrics & Goals — baseline digits + goal only; targets are prescribed */}
-      <form onSubmit={saveBody} className="card space-y-3">
+      <form onChange={e=>{const {name,value,type}=e.target;setDraft(d=>({...d,[name]:type==='number'?Number(value):value}))}} onSubmit={saveBody} className="card space-y-3">
         <h3 className="font-bold text-sm text-soft">Athlete Metrics & Goals</h3>
         <p className="text-xs text-mid">Enter your current numbers and pick a goal — FORGE prescribes the targets.</p>
         <div className="grid grid-cols-2 gap-2">
@@ -166,13 +168,14 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
         </div>
         <div>
           <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Race Date</label>
-          <input name="targetRaceDate" type="date" defaultValue={p.targetRaceDate} className="input tnum" />
+          <input name="targetRaceDate" aria-label="Race date" type="date" defaultValue={p.targetRaceDate} className="input tnum" />
         </div>
 
+        <label>Race name<input className="input" name="targetRaceName" defaultValue={p.targetRaceName} maxLength={100}/></label>
         {/* NUTRITIONIST TARGET PRESCRIPTION */}
         {(() => {
-          const rx = prescribe(p)
-          const m = computeMetrics(p)
+          const rx = prescribe(draft)
+          const m = computeMetrics(draft)
           return (
             <div className="rounded-2xl p-4 space-y-3 border-2" style={{ borderColor: 'var(--uv)', background: 'color-mix(in srgb, var(--uv) 8%, var(--paper-card))' }}>
               <p className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--uv)' }}>
@@ -199,7 +202,7 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
                   <span className="text-mid">(healthy athletic range: {rx.healthyRange})</span>
                 </p>
                 <p className="text-xs text-soft tnum">
-                  <strong className="text-ink">Timeline:</strong> ≈ {rx.weeks} weeks at a safe {rx.weeklyRate} kg/week
+                  <strong className="text-ink">Timeline:</strong> ≈ {rx.weeks} weeks at an estimated {rx.weeklyRate} kg/week
                 </p>
                 <p className="text-xs text-soft tnum">
                   <strong className="text-ink">Daily calories:</strong> {rx.calories.toLocaleString()} kcal
@@ -230,7 +233,7 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
                 ))}
               </div>
               <p className="text-[10px] text-faint">
-                BMR {rx.bmr.toLocaleString()} • TDEE {rx.tdee.toLocaleString()} kcal. Targets recalculate live — hit Save Metrics & Goals to apply.
+                BMR {rx.bmr.toLocaleString()} • TDEE {rx.tdee.toLocaleString()} kcal. Adult training estimates, not a clinical prescription. Save Metrics & Goals to apply.
               </p>
             </div>
           )
@@ -239,7 +242,7 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
       </form>
 
       {/* Feedback card */}
-      <div className="card space-y-3">
+      <div id="feedback" className="card space-y-3">
         <h3 className="font-bold text-sm text-soft">Feedback & Feature Requests</h3>
         <div className="flex flex-wrap gap-2">
           {FEEDBACK_CATEGORIES.map((c) => (
@@ -265,7 +268,7 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
       </div>
 
       {/* Data management */}
-      <CloudSyncCard state={state} importDataJSON={importDataJSON} notify={notify} />
+      <CloudSyncCard setPref={setPref} state={state} importDataJSON={importDataJSON} notify={notify} />
 
       <div className="card space-y-3">
         <h3 className="font-bold text-sm text-soft">Data Management</h3>

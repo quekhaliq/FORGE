@@ -1,5 +1,5 @@
 // Meals, constants, and prep checklist
-export const GITHUB_REPO = 'quekhaliq/hybrid-prep-hub-my'
+export const GITHUB_REPO = 'quekhaliq/FORGE'
 
 export const SPORTS = ['HYROX', 'CrossFit', 'Olympic Weightlifting', 'Hybrid']
 export const LEVELS = ['Beginner', 'Intermediate', 'Pro']
