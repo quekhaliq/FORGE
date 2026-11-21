@@ -20,6 +20,8 @@ function defaultState() {
       bodyWeightKg: 70,
       heightCm: 170,
       bodyFatPct: 20,
+      age: 30,
+      activityDays: 4,
       sex: 'male',
       goal: 'recomp', // lean | muscle | recomp | bulk
       targetWeightKg: 70,
@@ -270,7 +272,10 @@ export function computeMetrics(profile) {
   const bf = Math.min(60, Math.max(3, profile.bodyFatPct ?? 20))
   const height = profile.heightCm || 170
   const sex = profile.sex || 'male'
-  const age = 30 // conservative default; not collected
+  const age = Math.min(90, Math.max(14, profile.age ?? 30))
+  // activity multiplier from training days/week
+  const days = Math.min(7, Math.max(0, profile.activityDays ?? 4))
+  const activityMult = days === 0 ? 1.2 : days <= 2 ? 1.375 : days <= 4 ? 1.55 : days <= 6 ? 1.725 : 1.9
 
   const lbm = weight * (1 - bf / 100)
 
@@ -285,7 +290,7 @@ export function computeMetrics(profile) {
     sex === 'female'
       ? 10 * weight + 6.25 * height - 5 * age - 161
       : 10 * weight + 6.25 * height - 5 * age + 5
-  const tdee = Math.round(bmr * 1.55) // moderate training 3-5×/week
+  const tdee = Math.round(bmr * activityMult)
 
   const goal = GOALS.find((g) => g.id === (profile.goal || 'recomp')) || GOALS[2]
   const targetCal = Math.round(tdee + goal.calorieAdjust)
@@ -305,6 +310,8 @@ export function computeMetrics(profile) {
 
   return {
     lbm: Math.round(lbm * 10) / 10,
+    fatMass: Math.round((weight - lbm) * 10) / 10,
+    bmr,
     proteinG,
     proteinPerKg: Math.round((proteinG / weight) * 10) / 10,
     calories,
@@ -319,67 +326,96 @@ export function computeMetrics(profile) {
 }
 
 // ============================================================================
-// Coach-style recommendation engine — explains what the numbers mean
-// and suggests safe, evidence-based targets for the selected goal.
+// NUTRITIONIST PRESCRIPTION ENGINE — user enters baseline digits + goal only;
+// the app prescribes target weight, BF%, timeline, calories & macros.
+// Healthy athletic BF ranges: men 10–14%, women 18–22%.
 // ============================================================================
 
-const HEALTHY_BF = { male: { min: 10, ideal: 15 }, female: { min: 18, ideal: 23 } }
+const HEALTHY_BF = { male: { min: 10, max: 14 }, female: { min: 18, max: 22 } }
 
-export function recommendPlan(profile) {
+export function prescribe(profile) {
   const weight = profile.bodyWeightKg || 70
   const bf = Math.min(60, Math.max(3, profile.bodyFatPct ?? 20))
   const sex = profile.sex || 'male'
-  const goal = profile.goal || 'recomp'
-  const lbm = weight * (1 - bf / 100)
+  const goalId = profile.goal || 'recomp'
   const healthy = HEALTHY_BF[sex]
-  const steps = []
+  const m = computeMetrics(profile)
 
-  if (goal === 'lean') {
-    // Fat loss: aim for healthy ideal BF, preserve LBM
-    const targetBf = bf > healthy.ideal ? healthy.ideal : Math.max(healthy.min, bf - 3)
-    const targetWeight = lbm / (1 - targetBf / 100)
-    const fatToLose = Math.max(0, weight - targetWeight)
-    const weeklyKg = Math.min(0.7, Math.max(0.3, weight * 0.0075)) // 0.5–0.75% BW/week
-    const weeks = Math.ceil(fatToLose / weeklyKg)
-    if (fatToLose >= 0.5) {
-      steps.push(
-        `Your body fat is ${bf}% — above the healthy athletic range for ${sex === 'female' ? 'women' : 'men'} (~${healthy.min}–${healthy.ideal}%). A lean target of ${targetBf}% body fat is realistic and healthy.`,
-        `That means losing about ${fatToLose.toFixed(1)} kg of fat while keeping your ${lbm.toFixed(1)} kg of muscle — target weight ≈ ${targetWeight.toFixed(1)} kg.`,
-        `Safe rate: ${weeklyKg.toFixed(1)} kg per week (0.5–0.75% of body weight). At that pace you'll reach it in roughly ${weeks} weeks.`,
-        `Your calorie target already includes a moderate deficit (−400 kcal) — combined with ${computeMetrics(profile).proteinG}g protein daily to protect muscle.`
-      )
+  const fatMass = Math.round((weight - m.lbm) * 10) / 10
+  let targetBf, targetWeight, weeklyRate, weeks
+
+  if (goalId === 'lean') {
+    if (bf > healthy.max) {
+      targetBf = healthy.max
+      weeklyRate = Math.min(0.7, Math.max(0.3, weight * 0.0075))
     } else {
-      steps.push(
-        `You're already lean at ${bf}% body fat — within the healthy athletic range.`,
-        `A fat-loss phase isn't necessary; staying at maintenance calories with high protein will keep you sharp.`,
-        `If you want visible definition, a slow recomp (maintenance calories + progressive training) is the better tool.`
-      )
+      // already within healthy range — gentle further cut
+      targetBf = Math.max(healthy.min, bf - 2)
+      weeklyRate = Math.min(0.4, Math.max(0.2, weight * 0.004))
     }
-  } else if (goal === 'muscle' || goal === 'bulk') {
-    const isBulk = goal === 'bulk'
-    const weeklyKg = isBulk ? 0.35 : 0.25 // ~0.25–0.35 kg/week lean gain
-    const months = isBulk ? 6 : 4
-    const gain = (weeklyKg * 4.3 * months).toFixed(1)
-    const targetWeight = (weight + weeklyKg * 4.3 * months).toFixed(1)
-    const targetBf = Math.min(healthy.ideal + (isBulk ? 4 : 2), bf + 2)
-    steps.push(
-      `Building muscle is slower than fat loss — expect roughly ${weeklyKg} kg per week of mostly-lean gain (${gain} kg over ~${months} months).`,
-      `Suggested checkpoint: reach ≈ ${targetWeight} kg body weight, letting body fat drift up modestly to ~${targetBf}% (normal when gaining).`,
-      `Your ${computeMetrics(profile).proteinG}g protein target and the ${isBulk ? '+400' : '+250'} kcal surplus in your calorie goal are set for exactly this.`,
-      `After the gain phase, a short lean/fat-loss block (−400 kcal, same protein) reveals the new muscle.`
-    )
+    targetWeight = m.lbm / (1 - targetBf / 100)
+    weeks = Math.max(2, Math.ceil(Math.abs(weight - targetWeight) / weeklyRate))
+  } else if (goalId === 'muscle' || goalId === 'bulk') {
+    const ratePerWeek = goalId === 'bulk' ? 0.35 : 0.25
+    const horizonWeeks = goalId === 'bulk' ? 16 : 12
+    targetWeight = Math.round((weight + ratePerWeek * horizonWeeks) * 10) / 10
+    targetBf = Math.min(healthy.max + 4, Math.round(bf + ratePerWeek * horizonWeeks * 0.35 * (100 / weight)))
+    weeks = horizonWeeks
+    weeklyRate = ratePerWeek
   } else {
-    // Recomp: similar weight, lower BF
-    const targetBf = Math.max(healthy.min, bf - 4)
-    const targetWeight = lbm / (1 - targetBf / 100)
-    const delta = (targetWeight - weight).toFixed(1)
-    steps.push(
-      `Recomposition means staying near your current weight while swapping fat for muscle — the scale barely moves, the mirror does.`,
-      `Aim for body fat from ${bf}% → ~${targetBf}% over 8–12 weeks. That's about ${Math.abs(delta)} kg ${delta >= 0 ? 'gain' : 'loss'} on the scale — don't chase the scale here.`,
-      `Maintenance calories (${computeMetrics(profile).calories.toLocaleString()} kcal) with ${computeMetrics(profile).proteinG}g protein is the right setup — protein is the driver of recomp.`,
-      `Progress markers: same weight, lifts going up, waist measurement going down. Track those instead of scale weight.`
-    )
+    // recomp: weight roughly stable, BF down 3–4 points
+    targetBf = Math.max(healthy.min, bf - 4)
+    targetWeight = Math.round(m.lbm / (1 - targetBf / 100) * 10) / 10
+    weeklyRate = Math.abs(targetWeight - weight) > 0.5
+      ? Math.abs(targetWeight - weight) / 10
+      : 0.1
+    weeks = 10
   }
 
-  return { steps, lbm, targetBf: steps.length ? undefined : undefined, bf, weight }
+  targetBf = Math.round(targetBf * 10) / 10
+  targetWeight = Math.round(targetWeight * 10) / 10
+
+  // goal-specific nutritionist rules (Malaysian context)
+  const rulesByGoal = {
+    lean: [
+      'Post-workout: keep 30–40g protein + a fist of carbs within 90 min after training (e.g. nasi leak swap — grilled chicken + rice, less sambal).',
+      'Swap liquid & hidden calories: teh tarik → teh O kosong, gravy/oil-heavy dishes → grilled or souped versions (sup ayam over goreng).',
+      'Hydration: 3–4 litres of water daily — thirst often reads as hunger, especially in Malaysian heat.',
+    ],
+    recomp: [
+      'Front-load protein: 30–40g across 4 meals (ayam bakar, telur separuh masak, tempeh & tauhu) — muscle needs steady supply.',
+      'Time carbs around training: more rice/chapati on training days, lighter on rest days.',
+      'Weigh weekly, not daily — recomp shows in the mirror and barbell numbers before the scale.',
+    ],
+    muscle: [
+      'Eat to the prescription, not appetite — missed surplus calories = missed growth. Add a daily smoothie (milk, banana, oats, peanut butter).',
+      'Post-workout carbs are non-negotiable: rice/noodles/chapati within 2h after training to refill glycogen for the next session.',
+      'Weigh in weekly same time same day — gaining slower than 0.2 kg/week means add ~200 kcal.',
+    ],
+    bulk: [
+      'Calorie-dense additions, not bigger meals: drizzle olive oil, extra rice, nuts, santan-based dishes in moderation.',
+      'Keep protein at prescription even on rest days — recovery is when muscle is built.',
+      'Cap the bulk at your prescribed timeline, then switch to Lean / Fat Loss to reveal the mass you built.',
+    ],
+  }
+
+  return {
+    fatMass,
+    lbm: m.lbm,
+    targetBf,
+    targetWeight,
+    weeklyRate: Math.round(weeklyRate * 100) / 100,
+    weeks,
+    weightChange: Math.round((targetWeight - weight) * 10) / 10,
+    calories: m.calories,
+    proteinG: m.proteinG,
+    carbsG: m.carbsG,
+    fatG: m.fatG,
+    floor: m.floor,
+    floored: m.floored,
+    tdee: m.tdee,
+    bmr: m.bmr,
+    healthyRange: `${healthy.min}–${healthy.max}%`,
+    rules: rulesByGoal[goalId] || rulesByGoal.recomp,
+  }
 }

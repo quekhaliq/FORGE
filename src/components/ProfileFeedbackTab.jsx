@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
-import { Download, Upload, Trash2, Lightbulb } from 'lucide-react'
+import { Download, Upload, Trash2 } from 'lucide-react'
 import { SPORTS, LEVELS, DIVISIONS, FEEDBACK_CATEGORIES, GITHUB_REPO } from '../data/malaysianMeals.js'
-import { GOALS, DIETARY_PREFS, computeMetrics, recommendPlan } from '../hooks/useAppState.js'
+import { GOALS, DIETARY_PREFS, computeMetrics, prescribe } from '../hooks/useAppState.js'
 import CloudSyncCard from './CloudSyncCard.jsx'
 
 export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSON, importDataJSON, resetAll, notify }) {
@@ -105,9 +105,10 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
         <button type="submit" className="btn-primary w-full">Save Training Profile</button>
       </form>
 
-      {/* Athlete Metrics & Goals card — direct numeric inputs only */}
+      {/* Athlete Metrics & Goals — baseline digits + goal only; targets are prescribed */}
       <form onSubmit={saveBody} className="card space-y-3">
         <h3 className="font-bold text-sm text-soft">Athlete Metrics & Goals</h3>
+        <p className="text-xs text-mid">Enter your current numbers and pick a goal — FORGE prescribes the targets.</p>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Body Weight (kg)</label>
@@ -122,15 +123,23 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
             <input name="bodyFatPct" type="number" step="0.5" min="3" max="60" defaultValue={p.bodyFatPct ?? 20} className="input tnum" />
           </div>
           <div>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Age (years)</label>
+            <input name="age" type="number" step="1" min="14" max="90" defaultValue={p.age ?? 30} className="input tnum" />
+          </div>
+          <div>
             <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Sex (calorie floor)</label>
             <select name="sex" defaultValue={p.sex || 'male'} className="input">
               <option value="male">Male</option>
               <option value="female">Female</option>
             </select>
           </div>
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Training Days / Week</label>
+            <input name="activityDays" type="number" step="1" min="0" max="7" defaultValue={p.activityDays ?? 4} className="input tnum" />
+          </div>
         </div>
         <div>
-          <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Target Goal</label>
+          <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Chosen Physique Goal</label>
           <div className="grid grid-cols-2 gap-2">
             {GOALS.map((g) => (
               <label key={g.id} className="cursor-pointer">
@@ -140,16 +149,6 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
                 </span>
               </label>
             ))}
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Target Weight (kg)</label>
-            <input name="targetWeightKg" type="number" step="0.1" min="30" defaultValue={p.targetWeightKg ?? 70} className="input tnum" />
-          </div>
-          <div>
-            <label className="text-[11px] font-bold uppercase tracking-wider text-mid block mb-1.5">Target Body Fat (%)</label>
-            <input name="targetBodyFatPct" type="number" step="0.5" min="5" max="50" defaultValue={p.targetBodyFatPct ?? 15} className="input tnum" />
           </div>
         </div>
         <div>
@@ -165,55 +164,69 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
           <input name="targetRaceDate" type="date" defaultValue={p.targetRaceDate} className="input tnum" />
         </div>
 
-        {/* computed targets preview */}
+        {/* NUTRITIONIST TARGET PRESCRIPTION */}
         {(() => {
+          const rx = prescribe(p)
           const m = computeMetrics(p)
           return (
-            <div className="rounded-xl p-3 bg-sunken space-y-1.5">
-              <p className="text-[10px] font-black uppercase tracking-widest accent-text">Computed Targets (live)</p>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div>
+            <div className="rounded-2xl p-4 space-y-3 border-2" style={{ borderColor: '#5F4B8B', background: 'color-mix(in srgb, #5F4B8B 10%, var(--paper-card))' }}>
+              <p className="text-[11px] font-black uppercase tracking-widest" style={{ color: '#5F4B8B' }}>
+                ⚕ Nutritionist Target Prescription
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="rounded-xl p-2" style={{ background: 'var(--paper)' }}>
                   <p className="text-lg font-black tnum accent-text">{m.lbm}</p>
-                  <p className="text-[9px] font-bold uppercase muted-text">LBM kg</p>
+                  <p className="text-[9px] font-bold uppercase muted-text">LBM (kg)</p>
                 </div>
-                <div>
-                  <p className="text-lg font-black tnum accent-text">{m.proteinG}g</p>
-                  <p className="text-[9px] font-bold uppercase muted-text">Protein ({m.proteinPerKg}g/kg)</p>
-                </div>
-                <div>
-                  <p className="text-lg font-black tnum accent-text">{m.calories.toLocaleString()}</p>
-                  <p className="text-[9px] font-bold uppercase muted-text">kcal/day</p>
+                <div className="rounded-xl p-2" style={{ background: 'var(--paper)' }}>
+                  <p className="text-lg font-black tnum text-orange-400">{rx.fatMass}</p>
+                  <p className="text-[9px] font-bold uppercase muted-text">Fat Mass (kg)</p>
                 </div>
               </div>
-              <p className="text-[10px] muted-text tnum">
-                {m.goalLabel} • fats {m.fatG}g / carbs {m.carbsG}g • est. weight @ target BF: {m.estTargetWeight}kg • TDEE {m.tdee.toLocaleString()}
-              </p>
-              {m.floored && (
-                <p className="text-[10px] text-orange-500 font-bold">
-                  ⚠ {m.goalLabel} would drop below the {m.floor.toLocaleString()} kcal {p.sex === 'female' ? 'female' : 'male'} safety floor — calories held at the floor.
+              <div className="rounded-xl p-3 space-y-1.5" style={{ background: 'var(--paper)' }}>
+                <p className="text-[10px] font-black uppercase tracking-widest accent-text">Your Prescription</p>
+                <p className="text-xs text-soft tnum">
+                  <strong className="text-ink">Target weight:</strong> {rx.targetWeight} kg{' '}
+                  <span className="text-mid">({rx.weightChange >= 0 ? '+' : ''}{rx.weightChange} kg from now)</span>
                 </p>
-              )}
-            </div>
-          )
-        })()}
-
-        {/* coach-style recommendation */}
-        {(() => {
-          const plan = recommendPlan(p)
-          const m = computeMetrics(p)
-          return (
-            <div className="rounded-xl p-3 space-y-2 border-2" style={{ borderColor: 'var(--uv)', background: 'color-mix(in srgb, var(--uv) 6%, var(--paper-card))' }}>
-              <p className="text-[10px] font-black uppercase tracking-widest accent-text flex items-center gap-1.5">
-                <Lightbulb className="w-3.5 h-3.5" /> Coach's Plan for {m.goalLabel}
-              </p>
-              <ul className="space-y-1.5">
-                {plan.steps.map((s, i) => (
-                  <li key={i} className="text-xs text-soft leading-relaxed flex gap-1.5">
-                    <span className="accent-text font-black shrink-0">•</span>
-                    <span>{s}</span>
-                  </li>
+                <p className="text-xs text-soft tnum">
+                  <strong className="text-ink">Target body fat:</strong> {rx.targetBf}%{' '}
+                  <span className="text-mid">(healthy athletic range: {rx.healthyRange})</span>
+                </p>
+                <p className="text-xs text-soft tnum">
+                  <strong className="text-ink">Timeline:</strong> ≈ {rx.weeks} weeks at a safe {rx.weeklyRate} kg/week
+                </p>
+                <p className="text-xs text-soft tnum">
+                  <strong className="text-ink">Daily calories:</strong> {rx.calories.toLocaleString()} kcal
+                  {rx.floored && <span className="text-orange-500 font-bold"> (held at {rx.floor.toLocaleString()} safety floor)</span>}
+                </p>
+                <div className="grid grid-cols-3 gap-1.5 pt-1">
+                  <div className="rounded-lg p-1.5 text-center" style={{ background: 'color-mix(in srgb, var(--uv) 10%, transparent)' }}>
+                    <p className="text-sm font-black tnum accent-text">{rx.proteinG}g</p>
+                    <p className="text-[8px] font-bold uppercase muted-text">Protein</p>
+                  </div>
+                  <div className="rounded-lg p-1.5 text-center" style={{ background: 'color-mix(in srgb, var(--uv) 10%, transparent)' }}>
+                    <p className="text-sm font-black tnum accent-text">{rx.carbsG}g</p>
+                    <p className="text-[8px] font-bold uppercase muted-text">Carbs</p>
+                  </div>
+                  <div className="rounded-lg p-1.5 text-center" style={{ background: 'color-mix(in srgb, var(--uv) 10%, transparent)' }}>
+                    <p className="text-sm font-black tnum accent-text">{rx.fatG}g</p>
+                    <p className="text-[8px] font-bold uppercase muted-text">Fats</p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-xl p-3 space-y-1.5" style={{ background: 'var(--paper)' }}>
+                <p className="text-[10px] font-black uppercase tracking-widest accent-text">3 Nutritionist Rules for You</p>
+                {rx.rules.map((r, i) => (
+                  <p key={i} className="text-xs text-soft leading-relaxed flex gap-1.5">
+                    <span className="font-black accent-text shrink-0">{i + 1}.</span>
+                    <span>{r}</span>
+                  </p>
                 ))}
-              </ul>
+              </div>
+              <p className="text-[10px] text-faint">
+                BMR {rx.bmr.toLocaleString()} • TDEE {rx.tdee.toLocaleString()} kcal. Targets recalculate live — hit Save Metrics & Goals to apply.
+              </p>
             </div>
           )
         })()}
