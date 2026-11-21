@@ -169,8 +169,8 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
           const rx = prescribe(p)
           const m = computeMetrics(p)
           return (
-            <div className="rounded-2xl p-4 space-y-3 border-2" style={{ borderColor: '#5F4B8B', background: 'color-mix(in srgb, #5F4B8B 10%, var(--paper-card))' }}>
-              <p className="text-[11px] font-black uppercase tracking-widest" style={{ color: '#5F4B8B' }}>
+            <div className="rounded-2xl p-4 space-y-3 border-2" style={{ borderColor: 'var(--uv)', background: 'color-mix(in srgb, var(--uv) 8%, var(--paper-card))' }}>
+              <p className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'var(--uv)' }}>
                 ⚕ Nutritionist Target Prescription
               </p>
               <div className="grid grid-cols-2 gap-2 text-center">
