@@ -55,7 +55,7 @@ export default function TargetEventCard({ profile, notify, addEvent, updateEvent
           className="relative min-h-[190px] p-5 flex flex-col justify-between"
           style={{
             background:
-              'linear-gradient(rgba(10,10,10,0.45), rgba(10,10,10,0.75)), radial-gradient(circle at 70% 30%, #2e2a1f 0%, #131316 60%), #131316',
+              'linear-gradient(rgba(10,10,10,0.45), rgba(10,10,10,0.75)), radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--uv) 14%, #131316) 0%, var(--paper-card) 60%), var(--paper-card)',
           }}
         >
           <div className="flex items-start justify-between gap-3">
@@ -63,28 +63,28 @@ export default function TargetEventCard({ profile, notify, addEvent, updateEvent
               <span className="inline-flex items-center gap-1.5 bg-orange-500 text-white font-black text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-lg">
                 <Flag className="w-3 h-3" /> Target Event
               </span>
-              <h2 className="display-font text-3xl text-white mt-3 truncate">{active?.name || 'Target Event'}</h2>
-              {active?.venue && <p className="text-xs font-bold text-zinc-300 mt-1 truncate">{active.venue}</p>}
-              <p className="text-xs font-bold text-zinc-300 mt-1.5 flex items-center gap-3 tnum">
+              <h2 className="display-font text-3xl text-ink mt-3 truncate">{active?.name || 'Target Event'}</h2>
+              {active?.venue && <p className="text-xs font-bold text-soft mt-1 truncate">{active.venue}</p>}
+              <p className="text-xs font-bold text-soft mt-1.5 flex items-center gap-3 tnum">
                 <span className="flex items-center gap-1"><CalendarDays className="w-3.5 h-3.5 text-orange-400" /> {fmtDate(active?.date)}</span>
                 {active?.location && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-orange-400" /> {active.location}</span>}
               </p>
-              {active?.notes && <p className="text-[11px] text-zinc-400 mt-1.5 italic">{active.notes}</p>}
+              {active?.notes && <p className="text-[11px] text-mid mt-1.5 italic">{active.notes}</p>}
             </div>
-            <div className="shrink-0 text-center bg-black/70 border border-soft rounded-xl px-4 py-3">
-              <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Race Countdown</p>
+            <div className="shrink-0 text-center bg-sunken border border-soft rounded-xl px-4 py-3">
+              <p className="text-[9px] font-black uppercase tracking-widest text-mid">Race Countdown</p>
               <p className="display-font text-5xl text-orange-400 leading-none mt-1 tnum">{dl(active?.date) ?? '--'}</p>
-              <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mt-1">Days to go</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-mid mt-1">Days to go</p>
             </div>
           </div>
           <button
             onClick={() => setShowManage(true)}
-            className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/60 border border-soft text-zinc-200 text-[10px] font-black uppercase px-2.5 py-1.5 rounded-lg hover:text-orange-400"
+            className="absolute top-3 right-3 flex items-center gap-1.5 bg-sunken border border-soft text-soft text-[10px] font-black uppercase px-2.5 py-1.5 rounded-lg hover:text-orange-400"
           >
             <Pencil className="w-3 h-3" /> Manage
           </button>
         </div>
-        <div className="h-2.5 w-full" style={{ background: 'repeating-linear-gradient(45deg, #f97316 0 12px, #0a0a0a 12px 24px)' }} />
+        <div className="h-2.5 w-full" style={{ background: 'repeating-linear-gradient(45deg, var(--uv) 0 12px, var(--paper-card) 12px 24px)' }} />
       </div>
 
       {/* upcoming events strip */}
