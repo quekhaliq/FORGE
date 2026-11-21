@@ -11,7 +11,14 @@ const TABS = [
 export default function Navbar({ activeTab, setActiveTab, daysLeft, onShare, onLaunchTimer, theme, onToggleTheme }) {
   return (
     <>
-      <header className="sticky top-0 z-40 backdrop-blur px-4 py-3" style={{ background: 'color-mix(in srgb, var(--paper) 92%, transparent)', borderBottom: '2px solid var(--line)' }}>
+      <header
+        className="sticky top-0 z-40 backdrop-blur px-4 py-3"
+        style={{
+          background: 'color-mix(in srgb, var(--paper) 92%, transparent)',
+          borderBottom: '2px solid var(--line)',
+          paddingTop: 'max(12px, env(safe-area-inset-top))',
+        }}
+      >
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <div className="leading-none">
@@ -79,7 +86,7 @@ export default function Navbar({ activeTab, setActiveTab, daysLeft, onShare, onL
       </nav>
 
       {/* mobile: bottom bar */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 backdrop-blur sm:hidden" style={{ background: 'color-mix(in srgb, var(--paper) 95%, transparent)', borderTop: '2px solid var(--line)' }}>
+      <nav className="fixed bottom-0 inset-x-0 z-40 backdrop-blur sm:hidden" style={{ background: 'color-mix(in srgb, var(--paper) 95%, transparent)', borderTop: '2px solid var(--line)', paddingBottom: 'max(6px, env(safe-area-inset-bottom))' }}>
         <div className="grid grid-cols-4 px-2 py-1.5">
           {TABS.map(({ id, label, icon: Icon }) => {
             const active = activeTab === id
