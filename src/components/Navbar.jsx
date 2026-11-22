@@ -1,12 +1,11 @@
-
 import { useState, useEffect } from 'react'
-import { Dumbbell, Medal, Utensils, User, Share2, Timer, Sun, Moon } from 'lucide-react'
+import { Dumbbell, Medal, Utensils, User, Share2, Timer, Sun, Moon, Menu, X } from 'lucide-react'
 
 const TABS = [
-  { id: 'train', label: 'Train', icon: Dumbbell },
-  { id: 'oly', label: 'Lifts', icon: Medal },
-  { id: 'fuel', label: 'Fuel', icon: Utensils },
-  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'train', label: 'Train', desc: 'Today\u2019s sessions', icon: Dumbbell },
+  { id: 'oly', label: 'Lifts', desc: 'PRs & lifting log', icon: Medal },
+  { id: 'fuel', label: 'Fuel', desc: 'Protein & meals', icon: Utensils },
+  { id: 'profile', label: 'Profile', desc: 'Settings & data', icon: User },
 ]
 
 // live local date + timezone, updates every minute
@@ -25,41 +24,58 @@ function useLocalDateTime() {
 
 export default function Navbar({ activeTab, setActiveTab, daysLeft, onShare, onLaunchTimer, theme, onToggleTheme }) {
   const { date, time, tz } = useLocalDateTime()
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const activeMeta = TABS.find((t) => t.id === activeTab) || TABS[0]
+
+  const go = (id) => {
+    setActiveTab(id)
+    setDrawerOpen(false)
+  }
+
   return (
     <>
       <header
         className="sticky top-0 z-40 backdrop-blur px-4 py-3"
         style={{
           background: 'color-mix(in srgb, var(--paper) 92%, transparent)',
-          borderBottom: '2px solid var(--line)',
+          borderBottom: '1px solid var(--line-soft)',
           paddingTop: 'max(12px, env(safe-area-inset-top))',
         }}
       >
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <svg viewBox="0 0 24 10" className="w-7 h-3 shrink-0" aria-hidden><g fill="var(--uv)"><rect x="0" y="0" width="4" height="10"/><rect x="6" y="0" width="4" height="10"/><rect x="12" y="0" width="4" height="10"/></g></svg>
-            <span className="display-font text-2xl neon-text">
-                FORGE<span style={{ color: 'var(--ink)' }}>.</span>
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="w-[44px] h-[44px] rounded-full border flex items-center justify-center transition hover:accent-text"
+              style={{ borderColor: 'var(--line)', color: 'var(--ink)' }}
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col leading-none min-w-0">
+              <span className="display-font text-xl">
+                FORGE<span className="accent-text">.</span>
               </span>
-            <span className="hidden md:block text-[9px] font-black uppercase tracking-[0.18em] ml-2 pl-2" style={{ color: 'var(--muted)', borderLeft: '1px solid var(--line-soft)' }}>
-              Built on Strength | Driven by Purpose
-            </span>
+              <span className="hidden sm:block text-[10px] font-medium muted-text mt-1">
+                {activeMeta.desc}
+              </span>
+            </div>
             {/* live local date + timezone */}
-            <span className="hidden md:flex flex-col leading-none ml-2 pl-2 border-l border-soft">
-              <span className="text-[10px] font-bold text-ink tnum">{date} • {time}</span>
-              <span className="text-[9px] font-semibold text-faint uppercase tracking-wider">{tz}</span>
+            <span className="hidden md:flex flex-col leading-none ml-2 pl-3 border-l border-soft">
+              <span className="text-[10px] font-semibold text-soft tnum">{date} • {time}</span>
+              <span className="text-[9px] font-medium text-faint uppercase tracking-wider">{tz}</span>
             </span>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {daysLeft !== null && (
-              <span className="font-black text-xs px-2.5 py-1.5 rounded-lg tnum border-2" style={{ borderColor: 'var(--uv)', color: 'var(--uv)' }}>
+              <span className="font-semibold text-xs px-3 py-1.5 rounded-full tnum" style={{ background: 'color-mix(in srgb, var(--uv) 12%, transparent)', color: 'var(--uv)' }}>
                 T-{daysLeft}
               </span>
             )}
             <button
               onClick={onToggleTheme}
-              className="w-[44px] h-[44px] rounded-xl border-2 flex items-center justify-center transition"
-              style={{ borderColor: 'var(--line-soft)', color: 'var(--ink)' }}
+              className="w-[44px] h-[44px] rounded-full border flex items-center justify-center transition"
+              style={{ borderColor: 'var(--line)', color: 'var(--ink)' }}
               aria-label={"Switch theme (current: " + theme + ")"}
             >
               <Sun className="w-5 h-5 sun-only" />
@@ -67,15 +83,15 @@ export default function Navbar({ activeTab, setActiveTab, daysLeft, onShare, onL
             </button>
             <button
               onClick={onLaunchTimer}
-              className="w-[44px] h-[44px] rounded-xl border-2 flex items-center justify-center transition"
-              style={{ borderColor: 'var(--uv)', color: 'var(--uv)' }}
+              className="w-[44px] h-[44px] rounded-full border flex items-center justify-center transition"
+              style={{ borderColor: 'var(--line)', color: 'var(--ink)' }}
               aria-label="Launch WOD timer"
             >
               <Timer className="w-5 h-5" />
             </button>
             <button
               onClick={onShare}
-              className="w-[44px] h-[44px] rounded-xl flex items-center justify-center transition"
+              className="w-[44px] h-[44px] rounded-full flex items-center justify-center transition"
               style={{ background: 'var(--uv)', color: '#fff' }}
               aria-label="Share story card"
             >
@@ -85,46 +101,70 @@ export default function Navbar({ activeTab, setActiveTab, daysLeft, onShare, onL
         </div>
       </header>
 
-      {/* desktop: top segmented bar */}
-      <nav className="max-w-4xl mx-auto px-4 pt-3 hidden sm:block">
-        <div className="panel !rounded-2xl p-1.5 grid grid-cols-4 gap-1">
-          {TABS.map(({ id, label, icon: Icon }) => {
-            const active = activeTab === id
-            return (
+      {/* navigation drawer */}
+      {drawerOpen && (
+        <>
+          <div className="drawer-scrim" onClick={() => setDrawerOpen(false)} aria-hidden />
+          <nav className="drawer-panel" aria-label="Main navigation">
+            <div className="flex items-center justify-between px-4 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="display-font text-xl">
+                  FORGE<span className="accent-text">.</span>
+                </span>
+                <span className="text-[9px] font-medium uppercase tracking-[0.14em] text-faint">
+                  Built on Strength
+                </span>
+              </div>
               <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={`min-h-[44px] rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition ${
-                  active ? 'pill-active !rounded-lg' : 'muted-text hover:text-current'
-                }`}
+                onClick={() => setDrawerOpen(false)}
+                className="w-[40px] h-[40px] rounded-full border flex items-center justify-center transition"
+                style={{ borderColor: 'var(--line)', color: 'var(--muted)' }}
+                aria-label="Close navigation menu"
               >
-                <Icon className="w-4 h-4" /> {label}
+                <X className="w-4 h-4" />
               </button>
-            )
-          })}
-        </div>
-      </nav>
+            </div>
 
-      {/* mobile: bottom bar */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 backdrop-blur sm:hidden" style={{ background: 'color-mix(in srgb, var(--paper) 95%, transparent)', borderTop: '2px solid var(--line)', paddingBottom: 'max(6px, env(safe-area-inset-bottom))' }}>
-        <div className="grid grid-cols-4 px-2 py-1.5">
-          {TABS.map(({ id, label, icon: Icon }) => {
-            const active = activeTab === id
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={`min-h-[52px] rounded-xl flex flex-col items-center justify-center gap-0.5 font-bold text-[10px] uppercase transition ${
-                  active ? 'accent-text' : 'muted-text'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                {label}
-              </button>
-            )
-          })}
-        </div>
-      </nav>
+            <div className="px-3 flex flex-col gap-1">
+              {TABS.map(({ id, label, desc, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => go(id)}
+                  className={`drawer-item ${activeTab === id ? 'active' : ''}`}
+                >
+                  <Icon className="w-5 h-5 shrink-0" />
+                  <span className="flex flex-col items-start leading-tight">
+                    <span>{label}</span>
+                    <span className="text-[10px] font-medium muted-text">{desc}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-auto px-4 pt-3" style={{ borderTop: '1px solid var(--line-soft)' }}>
+              <div className="flex items-center gap-2 py-2">
+                <button
+                  onClick={() => { onLaunchTimer(); setDrawerOpen(false) }}
+                  className="flex-1 min-h-[40px] rounded-full border flex items-center justify-center gap-2 text-xs font-semibold transition"
+                  style={{ borderColor: 'var(--line)', color: 'var(--ink)' }}
+                >
+                  <Timer className="w-4 h-4" /> WOD Timer
+                </button>
+                <button
+                  onClick={() => { onShare(); setDrawerOpen(false) }}
+                  className="flex-1 min-h-[40px] rounded-full flex items-center justify-center gap-2 text-xs font-semibold transition"
+                  style={{ background: 'var(--uv)', color: '#fff' }}
+                >
+                  <Share2 className="w-4 h-4" /> Share Card
+                </button>
+              </div>
+              <p className="text-[10px] text-faint text-center pt-1">
+                {date} • {tz}
+              </p>
+            </div>
+          </nav>
+        </>
+      )}
     </>
   )
 }

@@ -1,122 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Archivo+Black&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ============================================================================
-   FORGE design system — editorial print style, light & dark
-   Accent: ultra violet. Surfaces: cream (light) / carbon (dark).
+   FORGE design system — "Setra-inspired quiet companion" style.
+   Near-black canvas, warm cream ink, burnt-orange accent, serif headlines,
+   generous whitespace, soft rounded cards, thin hairline borders.
    Semantic classes auto-adapt via .dark on <html>.
    ========================================================================== */
 :root {
-  /* LIGHT theme tokens — dual orange: deep orange base + neon orange accent */
-  --uv: #ea580c;         /* deep orange — base (chips, labels, day chips, borders) */
-  --uv-bright: #ff6d1f;  /* neon orange — accent (CTAs, countdown, PR glow) */
-  --uv-neon: #ff8c1a;    /* neon orange pop for glows and highlights */
-  --ink: #18181b;        /* dark ink text */
-  --paper: #faf8f3;      /* warm paper canvas */
+  /* LIGHT theme tokens */
+  --uv: #c2571b;         /* burnt orange — accent */
+  --uv-bright: #d96625;  /* hover/active accent */
+  --uv-neon: #d96625;    /* kept for legacy utility usage */
+  --ink: #1c1917;        /* warm stone ink */
+  --paper: #f7f5f0;      /* warm cream canvas */
   --paper-card: #ffffff;
-  --line: #e5e1da;
-  --line-soft: #ece8e0;
-  --muted: #71717a;
+  --line: #e7e3da;
+  --line-soft: #efece5;
+  --muted: #78716c;
 }
 
-/* DARK theme tokens (default brand look) — dual orange: vivid base + neon pop */
+/* DARK theme tokens (default brand look) — near-black, quiet and calm */
 .dark {
-  --uv: #f97316;         /* vivid orange — base */
-  --uv-bright: #fb923c;  /* light orange */
-  --uv-neon: #ff8a00;    /* neon orange — electric pop on dark canvas */
-  --ink: #fafafa;
-  --paper: #0a0a0a;
-  --paper-card: #131316;
-  --line: #2a2a2e;
-  --line-soft: #232326;
-  --muted: #a1a1aa;
+  --uv: #e07a3f;         /* soft burnt orange that reads well on black */
+  --uv-bright: #f08c4f;
+  --uv-neon: #f08c4f;
+  --ink: #f3efe9;        /* warm off-white ink */
+  --paper: #0d0c0b;      /* near-black warm canvas */
+  --paper-card: #171514;
+  --line: #292623;
+  --line-soft: #211f1c;
+  --muted: #a8a29e;
 }
-
-/* ============================================================================
-   AURORA — alternative UI/UX concept: glassmorphic cool athletic style.
-   Frosted translucent cards over a soft blue→teal gradient, pill shapes,
-   rounded corners everywhere, softer display type. Applied via .aurora
-   on <html>, cycled from the theme toggle (light → dark → aurora).
-   ========================================================================== */
-.aurora {
-  --uv: #3b82f6;         /* blue-500 accent */
-  --uv-bright: #22d3ee;  /* cyan-400 highlight */
-  --ink: #0f172a;        /* slate-900 ink */
-  --paper: #eef4fb;      /* cool sky canvas */
-  --paper-card: rgba(255, 255, 255, 0.55); /* glass */
-  --line: rgba(148, 163, 184, 0.5);
-  --line-soft: rgba(203, 213, 225, 0.7);
-  --muted: #64748b;
-}
-
-.aurora body,
-.aurora {
-  background:
-    radial-gradient(800px 500px at 15% 0%, rgba(59, 130, 246, 0.16), transparent 60%),
-    radial-gradient(700px 500px at 90% 15%, rgba(34, 211, 238, 0.14), transparent 55%),
-    radial-gradient(600px 400px at 50% 100%, rgba(168, 85, 247, 0.10), transparent 60%),
-    linear-gradient(180deg, #eef4fb 0%, #e6eefb 100%);
-}
-
-.aurora .card,
-.aurora .panel {
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(18px) saturate(1.4);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.10);
-  border-radius: 24px;
-}
-
-.aurora .panel { border-radius: 28px; border: 1.5px solid rgba(255,255,255,0.7); }
-
-.aurora .btn-primary {
-  background: linear-gradient(135deg, #3b82f6, #22d3ee);
-  color: #fff;
-  border-radius: 999px;
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
-}
-.aurora .btn-ghost {
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(12px);
-  border-radius: 999px;
-  border: 1.5px solid rgba(255, 255, 255, 0.8);
-  color: #0f172a;
-}
-.aurora .pill-active {
-  background: linear-gradient(135deg, #3b82f6, #22d3ee);
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-}
-.aurora .pill-idle {
-  background: rgba(255, 255, 255, 0.55);
-  color: #64748b;
-  border: 1.5px solid rgba(255, 255, 255, 0.8);
-  border-radius: 999px;
-}
-.aurora .input {
-  background: rgba(255, 255, 255, 0.6);
-  border: 1.5px solid rgba(203, 213, 225, 0.9);
-  border-radius: 999px;
-}
-.aurora .input:focus { border-color: #3b82f6; }
-.aurora .section-chip {
-  border-radius: 999px;
-  background: linear-gradient(135deg, #3b82f6, #22d3ee);
-}
-.aurora .day-chip { border-radius: 12px; }
-.aurora .display-font {
-  font-family: 'Inter', sans-serif;
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  text-transform: none; /* softer sentence-style headlines */
-}
-.aurora .hard-shadow-brand { box-shadow: 0 8px 24px rgba(34, 211, 238, 0.25); }
 
 body {
   touch-action: manipulation; /* kills double-tap zoom on mobile */
@@ -131,21 +49,23 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--line-soft); border-radius: 3px; }
 
 @layer components {
+  /* serif editorial headlines, sentence case — calm, not shouty */
   .display-font {
-    font-family: 'Archivo Black', 'Inter', sans-serif;
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-transform: none;
   }
   .btn-primary {
-    @apply font-bold rounded-xl min-h-[44px] px-4 transition;
+    @apply font-semibold rounded-full min-h-[44px] px-5 transition;
     background: var(--uv);
-    color: #0a0a0a;
+    color: #fff;
   }
-  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-primary:hover { filter: brightness(1.08); }
   .btn-ghost {
-    @apply font-bold rounded-xl min-h-[44px] px-4 transition border-2;
+    @apply font-semibold rounded-full min-h-[44px] px-5 transition border;
     background: var(--paper-card);
-    border-color: var(--line-soft);
+    border-color: var(--line);
     color: var(--ink);
   }
   .btn-ghost:hover { border-color: var(--uv); color: var(--uv); }
@@ -154,91 +74,129 @@ body {
     background: var(--paper-card);
     border: 1px solid var(--line-soft);
   }
-  /* editorial hard-bordered panel (reference style) */
+  /* soft panel — replaces the old hard editorial border */
   .panel {
-    @apply rounded-none;
+    @apply rounded-2xl;
     background: var(--paper-card);
-    border: 2px solid var(--line);
+    border: 1px solid var(--line-soft);
   }
   .pill-active {
-    background: var(--uv);
-    color: #fff;
-    border: 2px solid var(--uv);
+    background: color-mix(in srgb, var(--uv) 14%, transparent);
+    color: var(--uv);
+    border: 1px solid color-mix(in srgb, var(--uv) 35%, transparent);
+    border-radius: 999px;
   }
   .pill-idle {
-    @apply border-2;
+    @apply border;
     background: var(--paper-card);
     border-color: var(--line-soft);
     color: var(--muted);
+    border-radius: 999px;
   }
   .input {
     @apply w-full rounded-xl px-3 min-h-[44px] text-sm focus:outline-none transition border;
     background: var(--paper);
-    border-color: var(--line-soft);
+    border-color: var(--line);
     color: var(--ink);
   }
   .input:focus { border-color: var(--uv); }
   .tnum { font-variant-numeric: tabular-nums; }
   .accent-text { color: var(--uv); }
   .muted-text { color: var(--muted); }
-  /* dotted week-plan rows like the reference */
+  /* calm hairline list rows */
   .plan-row {
     @apply flex items-center gap-3 py-3;
-    border-bottom: 1px dotted var(--line-soft);
+    border-bottom: 1px solid var(--line-soft);
   }
   .plan-row:last-child { border-bottom: none; }
   .day-chip {
-    @apply display-font text-xs px-2.5 py-2 shrink-0;
-    background: var(--line);
-    color: var(--paper);
+    @apply text-xs font-bold px-2.5 py-2 shrink-0 rounded-lg tnum;
+    background: var(--line-soft);
+    color: var(--muted);
   }
   .day-chip.today {
     background: var(--uv);
     color: #fff;
   }
   .today-chip {
-    @apply text-[10px] font-black uppercase px-2 py-1 rounded;
-    background: color-mix(in srgb, var(--uv) 15%, transparent);
+    @apply text-[10px] font-semibold uppercase px-2 py-1 rounded-full;
+    background: color-mix(in srgb, var(--uv) 12%, transparent);
     color: var(--uv);
   }
   .accent-bar {
-    @apply inline-block w-8 h-[3px] align-middle mr-3;
+    @apply inline-block w-8 h-[2px] align-middle mr-3 rounded-full;
     background: var(--uv);
   }
-  .hard-shadow-brand {
-    box-shadow: 4px 4px 0px var(--uv-bright);
-  }
-  /* dual-orange system: --uv is the base, --uv-neon is the electric pop */
-  .neon-text { color: var(--uv-neon); }
+  .hard-shadow-brand { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10); }
+
+  /* kept so legacy utilities keep working; quiet, no glow */
+  .neon-text { color: var(--uv); }
   .neon-bg {
-    background: var(--uv-neon);
-    color: #0a0a0a;
+    background: var(--uv);
+    color: #fff;
   }
-  .neon-glow {
-    box-shadow: 0 0 18px color-mix(in srgb, var(--uv-neon) 55%, transparent);
-  }
-  .neon-countdown {
-    color: var(--uv-neon);
-    text-shadow: 0 0 24px color-mix(in srgb, var(--uv-neon) 45%, transparent);
-  }
-  .duotone-bar {
-    background: repeating-linear-gradient(90deg, var(--uv) 0 14px, var(--uv-neon) 14px 28px);
-  }
+  .neon-glow { box-shadow: 0 4px 14px color-mix(in srgb, var(--uv) 20%, transparent); }
+  .neon-countdown { color: var(--uv); text-shadow: none; }
+  .duotone-bar { background: var(--uv); }
+
   /* semantic text/surface utilities — theme-adaptive */
   .text-ink { color: var(--ink); }
   .text-soft { color: color-mix(in srgb, var(--ink) 80%, var(--muted)); }
   .text-mid { color: var(--muted); }
   .text-faint { color: color-mix(in srgb, var(--muted) 80%, transparent); }
   .bg-sunken {
-    background: color-mix(in srgb, var(--ink) 8%, var(--paper-card));
+    background: color-mix(in srgb, var(--ink) 6%, var(--paper-card));
   }
   .border-soft { border-color: var(--line-soft); }
   .surface-btn {
-    background: var(--paper);
+    background: var(--paper-card);
     color: var(--ink);
-    border: 2px solid var(--line-soft);
+    border: 1px solid var(--line);
   }
   .surface-btn:hover { border-color: var(--uv); color: var(--uv); }
+
+  /* navigation drawer */
+  .drawer-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    animation: fade-in 0.18s ease-out;
+  }
+  .drawer-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 51;
+    width: min(300px, 84vw);
+    background: var(--paper-card);
+    border-right: 1px solid var(--line-soft);
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    animation: slide-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex;
+    flex-direction: column;
+  }
+  .drawer-item {
+    @apply w-full flex items-center gap-3 min-h-[48px] px-4 rounded-xl text-sm font-semibold transition;
+    color: var(--muted);
+  }
+  .drawer-item:hover { color: var(--ink); background: var(--line-soft); }
+  .drawer-item.active {
+    color: var(--uv);
+    background: color-mix(in srgb, var(--uv) 10%, transparent);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
 }
 
 /* theme toggle icon swap */

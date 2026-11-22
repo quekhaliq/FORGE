@@ -80,7 +80,7 @@ export default function App() {
   )
 
   return (
-    <div className="min-h-screen pb-24 sm:pb-8">
+    <div className="min-h-screen pb-10">
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -179,7 +179,7 @@ export default function App() {
 
       {/* non-intrusive toast */}
       {toast && (
-        <div key={toast.id} className="toast-enter fixed bottom-20 sm:bottom-6 inset-x-0 z-[55] flex justify-center pointer-events-none">
+        <div key={toast.id} className="toast-enter fixed bottom-6 inset-x-0 z-[55] flex justify-center pointer-events-none">
           <span className="text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg max-w-[90%] truncate border-2" style={{ background: 'var(--paper-card)', color: 'var(--ink)', borderColor: 'var(--line-soft)' }}>
             {toast.message}
           </span>

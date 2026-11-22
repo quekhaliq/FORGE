@@ -55,12 +55,12 @@ export default function TargetEventCard({ profile, notify, addEvent, updateEvent
           className="relative min-h-[190px] p-5 flex flex-col justify-between"
           style={{
             background:
-              'linear-gradient(rgba(10,10,10,0.45), rgba(10,10,10,0.75)), radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--uv) 14%, #131316) 0%, var(--paper-card) 60%), var(--paper-card)',
+              'radial-gradient(circle at 85% 20%, color-mix(in srgb, var(--uv) 10%, transparent) 0%, transparent 55%), var(--paper-card)',
           }}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 pr-1">
-              <span className="inline-flex items-center gap-1.5 bg-orange-500 text-white font-black text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-lg neon-glow">
+              <span className="inline-flex items-center gap-1.5 text-white font-semibold text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-full" style={{ background: 'var(--uv)' }}>
                 <Flag className="w-3 h-3" /> Target Event
               </span>
               <h2 className="display-font text-3xl text-ink mt-3 truncate">{active?.name || 'Target Event'}</h2>
@@ -74,7 +74,7 @@ export default function TargetEventCard({ profile, notify, addEvent, updateEvent
             <div className="shrink-0 text-center bg-sunken border border-soft rounded-xl px-4 py-3">
               <p className="text-[9px] font-black uppercase tracking-widest text-mid">Race Countdown</p>
               <p className="display-font text-5xl leading-none mt-1 tnum neon-countdown">{dl(active?.date) ?? '--'}</p>
-              <p className="text-[9px] font-black uppercase tracking-widest text-mid mt-1">Days to go</p>
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-mid mt-1">Days to go</p>
             </div>
           </div>
           <button
@@ -84,7 +84,7 @@ export default function TargetEventCard({ profile, notify, addEvent, updateEvent
             <Pencil className="w-3 h-3" /> Manage
           </button>
         </div>
-        <div className="h-2.5 w-full" style={{ background: 'repeating-linear-gradient(45deg, var(--uv) 0 12px, var(--paper-card) 12px 24px)' }} />
+        <div className="h-[3px] w-full rounded-b-2xl" style={{ background: 'var(--uv)', opacity: 0.6 }} />
       </div>
 
       {/* upcoming events strip */}
