@@ -60,7 +60,7 @@ export default function TargetEventCard({ profile, notify, addEvent, updateEvent
         >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 pr-1">
-              <span className="inline-flex items-center gap-1.5 bg-orange-500 text-white font-black text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-lg">
+              <span className="inline-flex items-center gap-1.5 bg-orange-500 text-white font-black text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-lg neon-glow">
                 <Flag className="w-3 h-3" /> Target Event
               </span>
               <h2 className="display-font text-3xl text-ink mt-3 truncate">{active?.name || 'Target Event'}</h2>
@@ -73,7 +73,7 @@ export default function TargetEventCard({ profile, notify, addEvent, updateEvent
             </div>
             <div className="shrink-0 text-center bg-sunken border border-soft rounded-xl px-4 py-3">
               <p className="text-[9px] font-black uppercase tracking-widest text-mid">Race Countdown</p>
-              <p className="display-font text-5xl text-orange-400 leading-none mt-1 tnum">{dl(active?.date) ?? '--'}</p>
+              <p className="display-font text-5xl leading-none mt-1 tnum neon-countdown">{dl(active?.date) ?? '--'}</p>
               <p className="text-[9px] font-black uppercase tracking-widest text-mid mt-1">Days to go</p>
             </div>
           </div>

@@ -10,9 +10,10 @@
    Semantic classes auto-adapt via .dark on <html>.
    ========================================================================== */
 :root {
-  /* LIGHT theme tokens */
-  --uv: #ea580c;         /* FORGE orange (deeper for contrast on light) */
-  --uv-bright: #f97316;  /* lighter orange */
+  /* LIGHT theme tokens — dual orange: deep orange base + neon orange accent */
+  --uv: #ea580c;         /* deep orange — base (chips, labels, day chips, borders) */
+  --uv-bright: #ff6d1f;  /* neon orange — accent (CTAs, countdown, PR glow) */
+  --uv-neon: #ff8c1a;    /* neon orange pop for glows and highlights */
   --ink: #18181b;        /* dark ink text */
   --paper: #faf8f3;      /* warm paper canvas */
   --paper-card: #ffffff;
@@ -21,10 +22,11 @@
   --muted: #71717a;
 }
 
-/* DARK theme tokens (default brand look) */
+/* DARK theme tokens (default brand look) — dual orange: vivid base + neon pop */
 .dark {
-  --uv: #f97316;
-  --uv-bright: #fb923c;
+  --uv: #f97316;         /* vivid orange — base */
+  --uv-bright: #fb923c;  /* light orange */
+  --uv-neon: #ff8a00;    /* neon orange — electric pop on dark canvas */
   --ink: #fafafa;
   --paper: #0a0a0a;
   --paper-card: #131316;
@@ -205,6 +207,22 @@ body {
   }
   .hard-shadow-brand {
     box-shadow: 4px 4px 0px var(--uv-bright);
+  }
+  /* dual-orange system: --uv is the base, --uv-neon is the electric pop */
+  .neon-text { color: var(--uv-neon); }
+  .neon-bg {
+    background: var(--uv-neon);
+    color: #0a0a0a;
+  }
+  .neon-glow {
+    box-shadow: 0 0 18px color-mix(in srgb, var(--uv-neon) 55%, transparent);
+  }
+  .neon-countdown {
+    color: var(--uv-neon);
+    text-shadow: 0 0 24px color-mix(in srgb, var(--uv-neon) 45%, transparent);
+  }
+  .duotone-bar {
+    background: repeating-linear-gradient(90deg, var(--uv) 0 14px, var(--uv-neon) 14px 28px);
   }
   /* semantic text/surface utilities — theme-adaptive */
   .text-ink { color: var(--ink); }

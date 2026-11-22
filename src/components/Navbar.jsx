@@ -38,7 +38,7 @@ export default function Navbar({ activeTab, setActiveTab, daysLeft, onShare, onL
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <svg viewBox="0 0 24 10" className="w-7 h-3 shrink-0" aria-hidden><g fill="var(--uv)"><rect x="0" y="0" width="4" height="10"/><rect x="6" y="0" width="4" height="10"/><rect x="12" y="0" width="4" height="10"/></g></svg>
-            <span className="display-font text-2xl" style={{ color: 'var(--uv)' }}>
+            <span className="display-font text-2xl neon-text">
                 FORGE<span style={{ color: 'var(--ink)' }}>.</span>
               </span>
             <span className="hidden md:block text-[9px] font-black uppercase tracking-[0.18em] ml-2 pl-2" style={{ color: 'var(--muted)', borderLeft: '1px solid var(--line-soft)' }}>

@@ -197,7 +197,7 @@ export default function OlyTrackerTab({ state, addOlyLog, deleteOlyLog }) {
                         <span
                           className={`text-[10px] font-black px-2 py-0.5 rounded ${
                             log.isPR
-                              ? 'bg-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.5)]'
+                              ? 'bg-orange-500 text-white shadow-[0_0_14px_rgba(255,140,0,0.65)]'
                               : 'bg-sunken text-soft'
                           }`}
                         >
