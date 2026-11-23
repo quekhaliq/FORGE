@@ -46,6 +46,7 @@ export default function CustomMealModal({
         }
 
   const tips = coachCheck(mealTotals, remaining, goalLabel)
+  // describe-mode needs a recognizable dish; exact-mode needs a name + numbers
   const canSave =
     mode === 'describe'
       ? desc.trim().length > 3 && est.matched
@@ -139,9 +140,14 @@ export default function CustomMealModal({
             </div>
           )}
           {!est.matched && desc.trim().length > 3 && (
-            <p className="text-xs text-mid">
-              No recognizable dishes yet — try keywords like nasi campur, ayam goreng, teh tarik… or switch to Exact Digits.
-            </p>
+            <div className="rounded-xl p-3 bg-sunken border border-soft space-y-2">
+              <p className="text-xs text-mid leading-relaxed">
+                We couldn't estimate "<span className="font-semibold text-ink">{desc.trim()}</span>" yet — try keywords like nasi campur, ayam goreng, teh tarik…
+              </p>
+              <button onClick={() => { setMode('exact'); setMealName(desc.trim()) }} className="btn-primary w-full text-xs">
+                Enter Numbers Manually Instead
+              </button>
+            </div>
           )}
         </div>
       ) : (

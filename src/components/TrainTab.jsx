@@ -91,23 +91,6 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
 
       <TargetEventCard profile={p} notify={onNotify} addEvent={onAddEvent} updateEvent={onUpdateEvent} deleteEvent={onDeleteEvent} setActiveEvent={onSetActiveEvent} />
 
-      {/* quick-jump navigation chips */}
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
-        {[
-          { id: 'sec-today', label: "Today's Session" },
-          { id: 'sec-plan', label: 'Weekly Plan' },
-          { id: 'sec-days', label: 'Day Details' },
-        ].map((s) => (
-          <button
-            key={s.id}
-            onClick={() => document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-            className="btn-ghost !min-h-[40px] text-[11px] whitespace-nowrap shrink-0"
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
       {/* stat cards */}
       <div className="grid grid-cols-3 gap-2.5">
         <div className="card !p-3 space-y-1">
@@ -137,11 +120,11 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
       </div>
 
       <div className="pt-2 space-y-1">
-        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-orange-400 flex items-center gap-2">
-          <span className="inline-block w-8 h-[3px] bg-orange-500" /> Training Plan
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] accent-text flex items-center gap-2">
+          <span className="accent-bar" /> Training Plan
         </p>
         <h2 className="display-font text-3xl text-ink">Weekly Engine</h2>
-        <p className="text-sm text-mid">Your session blueprint. Check off each session as you go.</p>
+        <p className="text-sm text-mid">Tap any day to see the full session and log your score.</p>
       </div>
 
             {/* 01 — TODAY'S SESSION panel (featured card with illustration) */}
@@ -195,43 +178,21 @@ export default function TrainTab({ state, toggleWorkout, updateWorkout, ensureWo
           ))}
         </div>
         <div className="px-4 pb-2 pt-2">
-          {weekProgram.map((wod, i) => {
-            const log = state.schedule.find((s) => s.id === wod.id)
-            const isToday = i === TODAY_INDEX
-            return (
-              <button key={wod.id} onClick={() => ensureWodEntry(wod.id, `${wod.format} — ${wod.day}`)} className="plan-row w-full text-left min-h-[56px]">
-                <span className={`day-chip ${isToday ? 'today' : ''}`}>{wod.day}</span>
-                <span className="flex-1 min-w-0">
-                  <span className="font-bold text-sm block truncate" style={{ color: log?.done ? 'var(--muted)' : 'var(--ink)', textDecoration: log?.done ? 'line-through' : 'none' }}>
-                    {wod.format}
-                  </span>
-                  <span className="text-xs muted-text block truncate">{wod.sub || wod.blocks[0]?.lines[0]}</span>
-                </span>
-                {isToday && <span className="today-chip shrink-0">Today</span>}
-                {log?.done && <span className="text-orange-500 shrink-0">✓</span>}
-              </button>
-            )
-          })}
+          {weekProgram.map((wod, i) => (
+            <WodDetailCard
+              key={wod.id}
+              wod={wod}
+              index={i}
+              preset={timerPresetFor(wod)}
+              log={state.schedule.find((s) => s.id === wod.id)}
+              onEnsure={() => ensureWodEntry(wod.id, `${wod.format} — ${wod.day}`)}
+              onToggle={toggleWorkout}
+              onLog={updateWorkout}
+              onLaunchTimer={onLaunchTimer}
+            />
+          ))}
         </div>
-        {/* expanded today card is shown in section 01; tapping a row jumps focus */}
       </section>
-
-      {/* per-WOD detail cards (collapsible, below plan) */}
-      <div className="space-y-3">
-        {weekProgram.map((wod, i) => (
-          <WodDetailCard
-            key={wod.id}
-            wod={wod}
-            index={i}
-            preset={timerPresetFor(wod)}
-            log={state.schedule.find((s) => s.id === wod.id)}
-            onEnsure={() => ensureWodEntry(wod.id, `${wod.format} — ${wod.day}`)}
-            onToggle={toggleWorkout}
-            onLog={updateWorkout}
-            onLaunchTimer={onLaunchTimer}
-          />
-        ))}
-      </div>
 
       <AddCustomWod onAdd={addCustomWorkout} />
     </div>
@@ -290,12 +251,13 @@ function TodaySession({ wod, log, onEnsure, onToggle, onLaunchTimer, preset }) {
   )
 }
 
-// collapsible per-day card with score logging
+// expandable weekly-plan row: collapsed = one calm line per day, expanded = full session + score logging
 function WodDetailCard({ wod, index, preset, log, onEnsure, onToggle, onLog, onLaunchTimer }) {
   const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState(log?.notes || '')
   const [result, setResult] = useState('')
   const done = !!log?.done
+  const isToday = index === TODAY_INDEX
 
   const handleSave = () => {
     onEnsure()
@@ -304,31 +266,34 @@ function WodDetailCard({ wod, index, preset, log, onEnsure, onToggle, onLog, onL
   }
 
   return (
-    <div className="panel">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 p-4 text-left min-h-[56px]">
-        <span className="section-chip">{String(index + 1).padStart(2, '0')}</span>
+    <div className="plan-row flex-col !gap-0 items-stretch">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 py-3 text-left min-h-[56px]">
+        <span className={`day-chip ${isToday ? 'today' : ''}`}>{wod.day}</span>
         <span className="flex-1 min-w-0">
-          <span className="display-font text-sm block truncate">{wod.format}</span>
-          <span className="text-[11px] muted-text block truncate">{wod.day} {wod.date} • {wod.sub || '—'}</span>
+          <span className="font-bold text-sm block truncate" style={{ color: done ? 'var(--muted)' : 'var(--ink)', textDecoration: done ? 'line-through' : 'none' }}>
+            {wod.format}
+          </span>
+          <span className="text-xs muted-text block truncate">{wod.sub || wod.blocks[0]?.lines[0]}</span>
         </span>
-        {log?.done && <span className="today-chip shrink-0">Done</span>}
+        {isToday && <span className="today-chip shrink-0">Today</span>}
+        {done && <span className="accent-text shrink-0">✓</span>}
         <ChevronDown className={`w-4 h-4 muted-text transition shrink-0 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
-        <div className="px-4 pb-4 border-t-2" style={{ borderColor: 'var(--line-soft)' }}>
-          <div className="flex gap-4 pt-3">
+        <div className="pb-4 pt-1">
+          <div className="flex gap-4">
             <div className="flex-1 space-y-1">
               {wod.blocks.map((block, bi) => (
                 <div key={bi} className="mb-2">
-                  {block.tag && <p className="text-[10px] font-black uppercase tracking-widest muted-text mb-0.5">{block.tag}</p>}
-                  <div className="border-l-2 pl-2.5 space-y-0.5" style={{ borderColor: 'var(--uv)' }}>
+                  {block.tag && <p className="text-[10px] font-bold uppercase tracking-widest muted-text mb-0.5">{block.tag}</p>}
+                  <div className="border-l pl-2.5 space-y-0.5" style={{ borderColor: 'var(--uv)' }}>
                     {block.lines.map((line, li) => (
-                      <p key={li} className="text-xs font-bold uppercase tracking-wide leading-snug">{line}</p>
+                      <p key={li} className="text-xs font-semibold uppercase tracking-wide leading-snug">{line}</p>
                     ))}
                   </div>
                   {block.loading && (
-                    <p className="text-[10px] font-black muted-text tnum mt-1 uppercase">
+                    <p className="text-[10px] font-semibold muted-text tnum mt-1 uppercase">
                       M- {block.loading[0]} KG / W- {block.loading[1]} KG
                     </p>
                   )}
@@ -346,7 +311,7 @@ function WodDetailCard({ wod, index, preset, log, onEnsure, onToggle, onLog, onL
                 )}
               </div>
             </div>
-            <div className="hidden sm:block shrink-0" style={{ background: 'color-mix(in srgb, var(--uv) 6%, var(--paper-card))' }}>
+            <div className="hidden sm:block shrink-0" style={{ background: 'color-mix(in srgb, var(--uv) 6%, var(--paper-card))', borderRadius: '12px' }}>
               <EquipmentArt kind={wod.art || 'barbell'} className="w-32 h-24 accent-text" />
             </div>
           </div>

@@ -9,7 +9,7 @@ import ShareStoryModal from './components/ShareStoryModal.jsx'
 import WodTimerModal from './components/WodTimerModal.jsx'
 import AddToHomeScreenBanner from './components/AddToHomeScreenBanner.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
-import { useAppState, getAllTimePRs, daysUntil } from './hooks/useAppState.js'
+import { useAppState, getAllTimePRs, daysUntil, todayKey } from './hooks/useAppState.js'
 
 export default function App() {
   const app = useAppState()
@@ -18,6 +18,7 @@ export default function App() {
   const [timerOpen, setTimerOpen] = useState(false)
   const [timerPreset, setTimerPreset] = useState(null)
   const [toast, setToast] = useState(null)
+  const [selectedDate, setSelectedDate] = useState(todayKey())
   const [theme, setTheme] = useState(() => localStorage.getItem('forge_theme') || 'dark')
 
   useEffect(() => {
@@ -128,12 +129,18 @@ export default function App() {
             state={app.state}
             profile={p}
             logProtein={logProtein}
-            removeProteinItem={app.removeProteinItem}
+            logProteinTo={app.logProteinTo}
+            removeProteinItemAt={app.removeProteinItemAt}
+            customMeals={app.state.customMeals}
+            saveCustomMeal={app.saveCustomMeal}
+            deleteCustomMeal={app.deleteCustomMeal}
             resetDailyFood={() => {
               app.resetDailyFood()
               notify("Today's protein reset")
             }}
             togglePrepItem={app.togglePrepItem}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
           />
         )}
         {activeTab === 'profile' && (

@@ -31,6 +31,8 @@ export default function ProfileFeedbackTab({ state, updateProfile, exportDataJSO
       bodyWeightKg: parseFloat(fd.get('bodyWeightKg')) || 70,
       heightCm: parseFloat(fd.get('heightCm')) || 170,
       bodyFatPct: parseFloat(fd.get('bodyFatPct')) || 20,
+      age: parseInt(fd.get('age'), 10) || 30,
+      activityDays: parseInt(fd.get('activityDays'), 10),
       sex: fd.get('sex') || 'male',
       goal: fd.get('goal') || 'recomp',
       targetWeightKg: parseFloat(fd.get('targetWeightKg')) || 70,
